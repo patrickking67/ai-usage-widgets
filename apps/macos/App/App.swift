@@ -64,6 +64,29 @@ enum Entry {
                     }
                 }
             }
+            // Rings widget, small 158×158 and medium 338×158, colour and vibrant.
+            MainActor.assumeIsolated {
+                let c = Collector(); c.interactive = false; c.collect()
+                let now = Date()
+                for (suffix, vibrant) in [("-rings", false), ("-rings-vibrant", true)] {
+                    let view = HStack(spacing: 16) {
+                        RingStack(providers: ringLanes(c.board, limit: 3), now: now)
+                            .padding(16).frame(width: 158, height: 158)
+                            .background(Color(white: vibrant ? 0.35 : 0.14), in: RoundedRectangle(cornerRadius: 20))
+                        RingRow(providers: ringLanes(c.board, limit: 4), now: now)
+                            .padding(16).frame(width: 338, height: 158)
+                            .background(Color(white: vibrant ? 0.35 : 0.14), in: RoundedRectangle(cornerRadius: 20))
+                    }
+                    .padding(12).background(Color(red: 0.16, green: 0.24, blue: 0.36))
+                    .environment(\.colorScheme, .dark).environment(\.forceVibrant, vibrant)
+                    let r = ImageRenderer(content: view); r.scale = 2
+                    let path = CommandLine.arguments[i + 1].replacingOccurrences(of: ".png", with: "\(suffix).png")
+                    if let img = r.nsImage, let tiff = img.tiffRepresentation,
+                       let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:]) {
+                        try? png.write(to: URL(fileURLWithPath: path))
+                    }
+                }
+            }
             // Dashboard, light and dark, for the site and README.
             MainActor.assumeIsolated {
                 let c = Collector(); c.interactive = false; c.collect()
@@ -123,7 +146,7 @@ struct TokenMeterApp: App {
         MenuBarExtra {
             PopoverView(board: collector.board, now: now, refresh: collector.refreshNow,
                         problems: collector.problems)
-                .onAppear { collector.collect(); now = Date() }
+                .onAppear { collector.refreshLimits(); now = Date() }
         } label: {
             MenuBarLabel(board: collector.board, now: now)
                 .task { collector.start(); DockPolicy.apply() }

@@ -36,6 +36,7 @@ must tolerate a missing file, unknown keys and unknown vendors.
 | `extra` | `{used, limit?}`? | Pay-as-you-go spend in dollars. |
 | `note` | string? | One line for lanes with nothing to run out of, e.g. `"1,922 premium credits this month · no cap"`. Show under the account line. |
 | `experimental` | bool? | Data source not verified on real accounts; say so in the UI. |
+| `breakdown` | [{`label`, `percent`}]? | Share of the weekly window by surface, largest first (Claude only). |
 
 ### Meter
 

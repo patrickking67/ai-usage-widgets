@@ -1,5 +1,25 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- **Rings widget.** Small: nested rings, one per lane, with the hottest number in the middle. Medium: a ring per lane with its reset. Vendor colour tells the lanes apart; vibrant mode draws them bright.
+
+- **Live Codex limits** from the endpoint Codex's own `/status` reads, so the card is current without a Codex turn. Session rollouts remain the fallback.
+- **Where the week went**: Claude's weekly window split by surface (Cowork, Claude Code, Chats…) under the Claude card.
+
+### Fixed
+- Claude's account and plan come from Anthropic's profile endpoint for the signed-in token. `~/.claude.json` keeps the previous account after a switch, so a personal plan could show as a team one.
+- Claude windows come from the `limits` list the Claude app draws, with model scopes ("Weekly · Fable"), instead of internal codenames.
+- Codex's plan follows the live account, and `promax` reads "Pro Max".
+
+### Changed
+- Limits refresh every 90 seconds and whenever the popover opens (at most every 20 seconds per vendor).
+- The Claude lane is named "Claude": its limits cover the whole account, not just Claude Code.
+- Clicking any widget opens the dashboard.
+- Widgets are named Rings, Limits and Activity, and their descriptions cover every lane.
+- The small Limits widget shows at most three lanes, so it never overflows.
+
 ## [1.0.0] - 2026-09-27
 
 Renamed to **TokenMeter**. The repo is restructured into one app per platform around a documented board file.

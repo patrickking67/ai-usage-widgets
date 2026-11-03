@@ -7,8 +7,9 @@ import Foundation
 /// - Anthropic's usage endpoint (`ClaudeLive`), polled when the status line
 ///   has gone quiet — every window, including per-model ones, plus extra spend.
 ///
-/// Plan and account come from `oauthAccount` in ~/.claude.json: profile
-/// metadata, no secrets.
+/// Plan and account come from Anthropic's profile endpoint, for the same token
+/// the limits are read with. `oauthAccount` in ~/.claude.json is only the
+/// fallback: it is a cache that keeps the previous account after a switch.
 @MainActor
 final class ClaudeSource: ProviderSource {
     let vendor = Vendor.claude
@@ -21,7 +22,10 @@ final class ClaudeSource: ProviderSource {
     private var liveEnabled: Bool { UserDefaults.standard.object(forKey: Self.liveEnabledKey) as? Bool ?? true }
 
     private var live: ClaudeLive.Snapshot?
+    private var profile: ClaudeLive.Profile?
     private var nextAttempt = Date.distantPast
+    private var nextProfile = Date.distantPast
+    private var lastFetch = Date.distantPast
     private var inFlight = false
 
     var isInstalled: Bool {
@@ -35,8 +39,12 @@ final class ClaudeSource: ProviderSource {
          Local.home.appendingPathComponent(".cache/claude-usage/usage.json")]
     }
 
+    /// Twenty seconds apart at most, so opening the popover repeatedly
+    /// can't hammer the endpoint.
     func refreshNow() {
-        if problem != ClaudeLive.Failure.rateLimited.message { nextAttempt = .distantPast }
+        guard problem != ClaudeLive.Failure.rateLimited.message else { return }
+        nextAttempt = max(lastFetch.addingTimeInterval(20), .now)
+        nextProfile = .distantPast
     }
 
     func usage(now: Date) -> ProviderUsage? {
@@ -55,12 +63,14 @@ final class ClaudeSource: ProviderSource {
         }
         let lineAt = Local.number(usage?["updated_at"])
 
-        let lineAge = now.timeIntervalSince1970 - (lineAt ?? 0)
-        if lineAge > 180 || lineMeters.count < 2 { refreshLive() }
+        // The status line can't see the model-scoped windows or the breakdown,
+        // so the endpoint is polled even while it is fresh.
+        refreshLive()
 
-        var meters = lineMeters, updatedAt = lineAt, extra: ExtraSpend?
+        var meters = lineMeters, updatedAt = lineAt, extra: ExtraSpend?, breakdown: [Share]?
         if let live {
             extra = live.extra
+            breakdown = live.breakdown.isEmpty ? nil : live.breakdown
             if live.fetchedAt >= (lineAt ?? 0) {
                 meters = live.meters
                 updatedAt = live.fetchedAt
@@ -72,37 +82,49 @@ final class ClaudeSource: ProviderSource {
 
         let orgType = acct?["organizationType"] as? String ?? ""
         let isOrg = orgType.contains("team") || orgType.contains("enterprise")
-        let account = Local.override("claudeAccountName")
+        let account = Local.override("claudeAccountName") ?? profile?.account
             ?? (isOrg ? (acct?["organizationName"] as? String ?? "Organization") : "Personal")
-
         // Individual plans carry their tier on the org (`default_claude_max_20x`)
-        // with `userRateLimitTier` null, so read both before falling back to
-        // `organizationType` (`claude_max`, `claude_pro`).
+        // with `userRateLimitTier` null, so read both.
         let tier = [acct?["userRateLimitTier"], acct?["organizationRateLimitTier"]]
             .compactMap { $0 as? String }.joined(separator: " ")
-        let plan: String
-        if orgType.contains("enterprise")      { plan = "Enterprise" }
-        else if orgType.contains("team")       { plan = "Team" }
-        else if tier.contains("max_20x")       { plan = "Max 20x" }
-        else if tier.contains("max_5x")        { plan = "Max 5x" }
-        else if tier.contains("max") || orgType.contains("max") { plan = "Max" }
-        else if tier.contains("pro") || orgType.contains("pro") { plan = "Pro" }
-        else                                   { plan = "Free" }
+        let plan = profile?.plan ?? Self.planName(orgType: orgType, tier: tier)
 
         return ProviderUsage(vendor: .claude, account: account, plan: plan,
-                             meters: meters, updatedAt: updatedAt, extra: extra)
+                             meters: meters, updatedAt: updatedAt, extra: extra, breakdown: breakdown)
     }
 
-    /// At most every three minutes; half an hour after a 429; hourly while
-    /// Claude Code's own login is expired (it renews itself on its next run).
+    /// From `organization_type` (`claude_team`, `claude_max`) and the rate
+    /// tier, for when the profile has no display name of its own.
+    nonisolated static func planName(orgType: String, tier: String) -> String {
+        if orgType.contains("enterprise") { return "Enterprise" }
+        if orgType.contains("team")       { return "Team" }
+        if tier.contains("max_20x")       { return "Max 20x" }
+        if tier.contains("max_5x")        { return "Max 5x" }
+        if tier.contains("max") || orgType.contains("max") { return "Max" }
+        if tier.contains("pro") || orgType.contains("pro") { return "Pro" }
+        return "Free"
+    }
+
+    /// Every 90 seconds (the call takes about 0.3s); the profile hourly; half
+    /// an hour after a 429; hourly while Claude Code's own login is expired
+    /// (it renews itself on its next run).
     private func refreshLive() {
         guard interactive, liveEnabled, !inFlight, Date() >= nextAttempt else { return }
         inFlight = true
-        nextAttempt = Date().addingTimeInterval(180)
+        nextAttempt = Date().addingTimeInterval(90)
+        let wantsProfile = Date() >= nextProfile
         Task { @MainActor in
             defer { inFlight = false }
             do {
-                live = try await ClaudeLive.fetch()
+                if wantsProfile {
+                    async let p = ClaudeLive.fetchProfile()
+                    live = try await ClaudeLive.fetch()
+                    if let p = try? await p { profile = p; nextProfile = Date().addingTimeInterval(3600) }
+                } else {
+                    live = try await ClaudeLive.fetch()
+                }
+                lastFetch = Date()
                 log.info("claude live: ok, \(self.live?.meters.count ?? 0, privacy: .public) windows")
                 problem = nil
                 onUpdate?()

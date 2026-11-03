@@ -16,7 +16,7 @@ final class Collector: ObservableObject {
     /// False for offscreen `--render`: no network, no Keychain, no notifications.
     var interactive = true {
         didSet {
-            claude.interactive = interactive; copilot.interactive = interactive
+            claude.interactive = interactive; codex.interactive = interactive; copilot.interactive = interactive
             cursor.interactive = interactive; grok.interactive = interactive
         }
     }
@@ -56,6 +56,13 @@ final class Collector: ObservableObject {
     func refreshNow() {
         sources.forEach { $0.refreshNow() }
         lastScan = .distantPast
+        collect()
+    }
+
+    /// Opening the popover: re-ask the vendors (each source throttles itself)
+    /// without restarting the activity scan.
+    func refreshLimits() {
+        sources.forEach { $0.refreshNow() }
         collect()
     }
 

@@ -33,7 +33,8 @@ struct SmallUsageView: View {
     let entry: UsageEntry
 
     var body: some View {
-        let providers = entry.board?.providers ?? []
+        // Three lanes fill a small widget; the rest are in the medium and large sizes.
+        let providers = Array((entry.board?.providers ?? []).prefix(3))
         VStack(alignment: .leading, spacing: 10) {
             Text("Usage").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
             if providers.isEmpty { Empty() }
@@ -132,16 +133,20 @@ struct UsageWidgetView: View {
             }
         }
         .containerBackground(for: .widget) { Color.clear.background(.background) }
+        .widgetURL(dashboardURL)
     }
 }
+
+/// Clicking any widget opens the dashboard in the menu-bar app.
+let dashboardURL = URL(string: "tokenmeter://dashboard")!
 
 struct LimitsWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "TokenMeterLimits", provider: UsageProvider()) { entry in
             UsageWidgetView(entry: entry)
         }
-        .configurationDisplayName("AI Usage")
-        .description("Claude Code and Codex limits: live countdowns, pace, and what's running hot.")
+        .configurationDisplayName("Limits")
+        .description("Every plan window with live countdowns and pace.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
@@ -178,6 +183,7 @@ struct ActivityWidgetView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .containerBackground(for: .widget) { Color.clear.background(.background) }
+        .widgetURL(dashboardURL)
     }
 }
 
@@ -186,15 +192,53 @@ struct ActivityWidget: Widget {
         StaticConfiguration(kind: "TokenMeterActivity", provider: UsageProvider()) { entry in
             ActivityWidgetView(entry: entry)
         }
-        .configurationDisplayName("AI Activity")
+        .configurationDisplayName("Activity")
         .description("Tokens over the last week, and what's using your limits.")
         .supportedFamilies([.systemMedium, .systemLarge])
+    }
+}
+
+// MARK: - Rings widget
+
+/// Small: nested rings. Medium: a ring per lane with its reset.
+struct RingsWidgetView: View {
+    @Environment(\.widgetFamily) private var family
+    let entry: UsageEntry
+
+    var body: some View {
+        Group {
+            if family == .systemSmall {
+                let lanes = ringLanes(entry.board, limit: 3)
+                if lanes.isEmpty { Empty() } else { RingStack(providers: lanes, now: entry.date) }
+            } else {
+                let lanes = ringLanes(entry.board, limit: 4)
+                if lanes.isEmpty { Empty() } else {
+                    RingRow(providers: lanes, now: entry.date)
+                        .frame(maxHeight: .infinity)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .containerBackground(for: .widget) { Color.clear.background(.background) }
+        .widgetURL(dashboardURL)
+    }
+}
+
+struct RingsWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "TokenMeterRings", provider: UsageProvider()) { entry in
+            RingsWidgetView(entry: entry)
+        }
+        .configurationDisplayName("Rings")
+        .description("How much of each plan is used, at a glance.")
+        .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
 
 @main
 struct TokenMeterWidgets: WidgetBundle {
     var body: some Widget {
+        RingsWidget()
         LimitsWidget()
         ActivityWidget()
     }

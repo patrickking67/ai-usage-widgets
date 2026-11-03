@@ -39,7 +39,7 @@ ditto build/Build/Products/Release/TokenMeter.app /Applications/TokenMeter.app
 open /Applications/TokenMeter.app
 ```
 
-Then add the **Limits** and **Activity** widgets from the desktop's Edit Widgets menu. Open the dashboard from the popover's **Dashboard** button, with `open tokenmeter://dashboard`, or by Cmd-clicking **↗ Dashboard** in the Claude Code status line.
+Then add the **Rings**, **Limits** and **Activity** widgets from the desktop's Edit Widgets menu. Open the dashboard from the popover's **Dashboard** button, with `open tokenmeter://dashboard`, or by Cmd-clicking **↗ Dashboard** in the Claude Code status line.
 
 ### Windows 10 / 11
 

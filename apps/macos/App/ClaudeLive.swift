@@ -8,14 +8,22 @@ import Foundation
 /// rotate the grant and sign every Claude Code session out, so an expired
 /// token is simply skipped until Claude Code renews it itself.
 ///
-/// Request shape mirrors ~/GitHub/ai-usage-widgets UsageClient: without the
-/// `claude-code` user agent this endpoint answers 429, which looks like a
-/// real rate limit and is not.
+/// Without the `claude-code` user agent this endpoint answers 429, which
+/// looks like a real rate limit and is not.
 enum ClaudeLive {
     struct Snapshot {
         var meters: [Meter]
         var extra: ExtraSpend?
+        var breakdown: [Share] = []
         var fetchedAt: TimeInterval
+    }
+
+    /// Who the token actually belongs to. `~/.claude.json` keeps the last
+    /// profile Claude Code cached, which goes stale after switching accounts;
+    /// this is the account the limits above are for.
+    struct Profile {
+        var account: String     // org name, or "Personal"
+        var plan: String        // "Ultra", "Max 20x", "Team"…
     }
 
     enum Failure: Error {
@@ -34,14 +42,29 @@ enum ClaudeLive {
     }
 
     private static let endpoint = URL(string: "https://api.anthropic.com/api/oauth/usage")!
+    private static let profileEndpoint = URL(string: "https://api.anthropic.com/api/oauth/profile")!
 
     static func fetch() async throws -> Snapshot {
+        decode(try await get(endpoint))
+    }
+
+    static func fetchProfile() async throws -> Profile {
+        let root = try await get(profileEndpoint)
+        let org = root["organization"] as? [String: Any] ?? [:]
+        let type = org["organization_type"] as? String ?? ""
+        let isOrg = type.contains("team") || type.contains("enterprise")
+        let shown = (org["plan_display_name"] as? String).flatMap { $0.isEmpty ? nil : $0 }
+        return Profile(account: isOrg ? (org["name"] as? String ?? "Organization") : "Personal",
+                       plan: shown ?? ClaudeSource.planName(orgType: type, tier: org["rate_limit_tier"] as? String ?? ""))
+    }
+
+    private static func get(_ url: URL) async throws -> [String: Any] {
         let token = try await Task.detached(priority: .utility) { try readToken() }.value
 
-        var req = URLRequest(url: endpoint, timeoutInterval: 20)
+        var req = URLRequest(url: url, timeoutInterval: 15)
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         req.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
-        req.setValue("claude-code/2.1.59", forHTTPHeaderField: "User-Agent")
+        req.setValue("claude-code/2.1.316", forHTTPHeaderField: "User-Agent")
 
         let (data, resp) = try await URLSession.shared.data(for: req)
         let status = (resp as? HTTPURLResponse)?.statusCode ?? -1
@@ -59,12 +82,51 @@ enum ClaudeLive {
         guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw Failure.badResponse(status)
         }
-        return decode(root)
+        return root
     }
 
-    /// Any top-level object with a `utilization` is a window, so a window
-    /// Anthropic adds later still shows up rather than silently vanishing.
+    /// `limits` is the list the Claude app itself draws: named windows with
+    /// model or surface scopes. When it is there it wins, and the top-level
+    /// codename objects (`iguana_necktie`…) are ignored, since they are
+    /// internal pools rather than plan windows.
     static func decode(_ root: [String: Any]) -> Snapshot {
+        var snapshot = legacyDecode(root)
+        if let limits = root["limits"] as? [[String: Any]], !limits.isEmpty {
+            var rows: [(Int, Int, Meter)] = []
+            for (i, l) in limits.enumerated() {
+                guard let pct = number(l["percent"]) else { continue }
+                let group = (l["group"] as? String ?? "").lowercased()
+                let kind = (l["kind"] as? String ?? "").lowercased()
+                let weekly = group.contains("week") || kind.contains("week")
+                let session = group.contains("session") || group.contains("five") || kind.contains("five")
+                var label = weekly ? "Weekly" : session ? "Current"
+                    : (group.isEmpty ? kind : group).replacingOccurrences(of: "_", with: " ").capitalized
+                let scope = l["scope"] as? [String: Any]
+                let model = (scope?["model"] as? [String: Any])?["display_name"] as? String
+                let surface = (scope?["surface"] as? [String: Any])?["display_name"] as? String
+                if let s = model ?? surface { label += " · \(s)" }
+                let order = (weekly ? 10 : 0) + (scope == nil ? 0 : 1)
+                rows.append((order, i, Meter(label: label, used: pct,
+                                             resetsAt: date(l["resets_at"])?.timeIntervalSince1970,
+                                             windowSeconds: weekly ? 604_800 : 18_000)))
+            }
+            if !rows.isEmpty {
+                rows.sort { ($0.0, $0.1) < ($1.0, $1.1) }
+                snapshot.meters = rows.map(\.2)
+            }
+        }
+        if let rows = (root["seven_day_breakdown"] as? [String: Any])?["rows"] as? [[String: Any]] {
+            snapshot.breakdown = rows.compactMap { r in
+                guard let p = number(r["percent"]), p > 0, let name = r["display_name"] as? String else { return nil }
+                return Share(label: name, percent: p)
+            }.sorted { $0.percent > $1.percent }
+        }
+        return snapshot
+    }
+
+    /// Before `limits`: any top-level object with a `utilization` is a window,
+    /// so a window Anthropic adds later still shows up.
+    private static func legacyDecode(_ root: [String: Any]) -> Snapshot {
         let known: [String: (label: String, span: TimeInterval, order: Int)] = [
             "five_hour": ("Current", 18_000, 0),
             "seven_day": ("Weekly", 604_800, 1),

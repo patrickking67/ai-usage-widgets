@@ -72,20 +72,31 @@ struct UsageBar: View {
     }
 }
 
-/// Activity-style ring.
+/// Activity-style ring. Like `UsageBar`, it drops colour for brightness
+/// when the widget is drawn vibrant.
 struct UsageRing: View {
     var fraction: Double
     var tint: Color
     var lineWidth: CGFloat = 7
+    private var vibrant = IsVibrant()
+
+    init(fraction: Double, tint: Color, lineWidth: CGFloat = 7) {
+        self.fraction = fraction; self.tint = tint; self.lineWidth = lineWidth
+    }
 
     var body: some View {
+        let style = StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+        // A sliver keeps the round cap visible at 0%, so an empty lane still reads as a ring.
+        let arc = Circle().trim(from: 0, to: min(max(fraction, 0.002), 1)).rotation(.degrees(-90))
         ZStack {
-            Circle().stroke(.primary.opacity(0.10), lineWidth: lineWidth)
-            Circle()
-                .trim(from: 0, to: fraction)
-                .stroke(tint.gradient, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-                .rotationEffect(.degrees(-90))
+            Circle().stroke(.primary.opacity(vibrant.wrappedValue ? 0.22 : 0.12), lineWidth: lineWidth)
+            if vibrant.wrappedValue {
+                arc.stroke(.primary, style: style).widgetAccentable()
+            } else {
+                arc.stroke(tint.gradient, style: style)
+            }
         }
+        .padding(lineWidth / 2)
     }
 }
 
@@ -197,6 +208,38 @@ struct ExtraRow: View {
     }
 }
 
+/// Where this week went: one segmented bar, then "Cowork 46 · Claude Code 34".
+struct BreakdownRow: View {
+    var shares: [Share]
+    private var vibrant = IsVibrant()
+
+    init(shares: [Share]) { self.shares = shares }
+
+    private static let tints: [Color] = [Palette.clay, Palette.cyan, Palette.amber,
+                                         Color(red: 0.55, green: 0.36, blue: 0.96), .gray]
+
+    var body: some View {
+        let total = max(shares.reduce(0) { $0 + $1.percent }, 1)
+        VStack(alignment: .leading, spacing: 4) {
+            GeometryReader { geo in
+                HStack(spacing: 1.5) {
+                    ForEach(Array(shares.enumerated()), id: \.element.id) { i, s in
+                        Rectangle()
+                            .fill(vibrant.wrappedValue ? AnyShapeStyle(.primary.opacity(1 - Double(i) * 0.18))
+                                                       : AnyShapeStyle(Self.tints[i % Self.tints.count]))
+                            .frame(width: max(geo.size.width * s.percent / total - 1.5, 2))
+                    }
+                }
+                .clipShape(Capsule())
+            }
+            .frame(height: 3)
+            Text(shares.map { "\($0.label) \(Int($0.percent.rounded()))%" }.joined(separator: " · "))
+                .font(.system(size: 9.5)).foregroundStyle(.tertiary).lineLimit(1)
+        }
+        .help("Share of this week's usage by surface")
+    }
+}
+
 /// "Live" with a dot, or "4d ago" with a clock once the vendor has gone quiet.
 struct FreshnessBadge: View {
     var provider: ProviderUsage
@@ -290,6 +333,7 @@ struct ProviderCard: View {
                     .font(.system(size: 10)).foregroundStyle(.tertiary)
             }
             ForEach(provider.meters) { MeterRow(meter: $0, now: now, compact: compact, stale: stale) }
+            if !compact, let shares = provider.breakdown, !shares.isEmpty { BreakdownRow(shares: shares) }
             if let extra = provider.extra { ExtraRow(extra: extra, compact: compact) }
         }
     }

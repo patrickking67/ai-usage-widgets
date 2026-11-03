@@ -72,7 +72,7 @@ enum Vendor: String, Codable, Hashable, CaseIterable {
 
     var displayName: String {
         switch self {
-        case .claude:  return "Claude Code"
+        case .claude:  return "Claude"
         case .codex:   return "Codex"
         case .copilot: return "GitHub Copilot"
         case .cursor:  return "Cursor"
@@ -125,6 +125,8 @@ struct ProviderUsage: Codable, Hashable, Identifiable {
     var note: String? = nil
     /// Data source not verified on real accounts; the card says so.
     var experimental: Bool? = nil
+    /// Where the weekly window went, by surface: "Cowork 46%, Claude Code 34%".
+    var breakdown: [Share]? = nil
 
     var updated: Date? { updatedAt.map { Date(timeIntervalSince1970: $0) } }
 
@@ -144,6 +146,13 @@ struct ProviderUsage: Codable, Hashable, Identifiable {
     func hottest(at now: Date) -> Meter? {
         meters.max { $0.fraction(at: now) < $1.fraction(at: now) }
     }
+}
+
+/// One surface's share of a window, as the vendor reports it.
+struct Share: Codable, Hashable, Identifiable {
+    var id: String { label }
+    var label: String
+    var percent: Double
 }
 
 /// Claude extra usage: spend beyond the plan, in dollars.
