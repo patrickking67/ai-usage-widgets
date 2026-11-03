@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -m unittest discover -s plugin/tests -v)",
+      "Bash(python3 -m unittest discover -s plugin/tests)",
+      "Bash(pwsh -NoProfile -File apps/windows/tests/Core.Tests.ps1)"
+    ]
+  }
+}
