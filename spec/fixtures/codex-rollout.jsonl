@@ -1,0 +1,4 @@
+{"type":"session_meta","payload":{"id":"01a06b9e-0000-0000-0000-000000000000"}}
+{"type":"event_msg","payload":{"type":"token_count","rate_limits":{"limit_id":"codex","limit_name":null,"primary":{"used_percent":28.0,"window_minutes":10080,"resets_at":1789103127},"secondary":null,"credits":{"has_credits":false,"unlimited":false,"balance":null}}}}
+{"type":"event_msg","payload":{"type":"token_count","rate_limits":{"limit_id":"codex","limit_name":null,"primary":{"used_percent":91.0,"window_minutes":300,"resets_at":1788455880},"secondary":{"used_percent":34.0,"window_minutes":10080,"resets_at":1789103127},"credits":{"has_credits":true,"unlimited":false,"balance":12.5}}}}
+{"type":"event_msg","payload":{"type":"agent_message","message":"done"}}

@@ -1,0 +1,67 @@
+name: TokenMeter
+options:
+  bundleIdPrefix: com.patrickking
+  deploymentTarget:
+    macOS: "14.0"
+# Signing team lives in Config/Local.xcconfig (gitignored); see README.
+configFiles:
+  Debug: Config/Base.xcconfig
+  Release: Config/Base.xcconfig
+settings:
+  base:
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_HARDENED_RUNTIME: YES
+targets:
+  TokenMeter:
+    type: application
+    platform: macOS
+    sources: [App, Shared]
+    dependencies:
+      - target: TokenMeterWidget
+        embed: true
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: TokenMeter
+        LSApplicationCategoryType: public.app-category.developer-tools
+        LSUIElement: true
+        CFBundleURLTypes:
+          - CFBundleURLName: com.patrickking.tokenmeter
+            CFBundleURLSchemes: [tokenmeter]
+        NSHumanReadableCopyright: ""
+    entitlements:
+      path: App/App.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.patrickking.tokenmeter
+        PRODUCT_NAME: TokenMeter
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+  TokenMeterWidget:
+    type: app-extension
+    platform: macOS
+    sources: [Widget, Shared]
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: TokenMeter
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Widget/Widget.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        # Read-only access to exactly the directory the status line writes.
+        com.apple.security.temporary-exception.files.home-relative-path.read-only:
+          - /.cache/tokenmeter/
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.patrickking.tokenmeter.widget
+        PRODUCT_NAME: TokenMeterWidget
+    dependencies:
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework

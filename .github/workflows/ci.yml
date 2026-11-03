@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  macos:
+    name: macOS app
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Build (unsigned)
+        working-directory: apps/macos
+        run: |
+          xcodegen generate
+          xcodebuild -project TokenMeter.xcodeproj -scheme TokenMeter -configuration Release \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build | tail -n 20
+
+  windows:
+    name: Windows core
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pester tests
+        shell: pwsh
+        run: |
+          Install-Module Pester -MinimumVersion 5.5 -Force -Scope CurrentUser
+          Invoke-Pester -Path apps/windows/tests -CI
+
+  plugin:
+    name: Claude Code plugin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: board.py against the spec fixtures
+        run: python -m unittest discover -s plugin/tests -v
+      - name: Manifests are valid JSON
+        run: |
+          python -m json.tool plugin/.claude-plugin/plugin.json > /dev/null
+          python -m json.tool .claude-plugin/marketplace.json > /dev/null

@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TokenMeter</title>
+<meta name="description" content="Every AI coding plan limit on one meter. Claude Code, Codex, GitHub Copilot and Cursor limits, pace and a month of token activity: in your menu bar, on your desktop and inside Claude Code.">
+<meta property="og:title" content="TokenMeter">
+<meta property="og:description" content="Every AI coding plan limit on one meter. Menu bar, desktop widgets, Windows tray and a Claude Code plugin.">
+<meta property="og:image" content="img/shot-dashboard-dark.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="img/icon.svg" type="image/svg+xml">
+<style>
+:root {
+  --bg: #fbfaf8; --bg2: #f2f0ec; --card: #ffffff; --ink: #1b1a19; --ink2: #5d5a55; --ink3: #8f8a83;
+  --line: #e4e0d9; --accent: #d97856; --cyan: #4fb3ea; --amber: #d9a257; --red: #ef6f86;
+  --codex: #4d85fa; --copilot: #8c5cf5; --cursor: #6b7280; --grok: #33c79e;
+  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 40px -12px rgba(0,0,0,.18);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f0f10; --bg2: #161618; --card: #1b1b1d; --ink: #f2f0ec; --ink2: #b3aea6; --ink3: #7c776f;
+  --line: #2a2a2d; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 20px 60px -20px rgba(0,0,0,.8);
+}}
+:root[data-theme="dark"] {
+  --bg: #0f0f10; --bg2: #161618; --card: #1b1b1d; --ink: #f2f0ec; --ink2: #b3aea6; --ink3: #7c776f;
+  --line: #2a2a2d; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 20px 60px -20px rgba(0,0,0,.8);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 16px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased; }
+a { color: inherit; }
+code, pre { font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace; font-size: .88em; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+@media (min-width: 720px) { .wrap { padding: 0 28px; } }
+
+/* nav */
+nav { position: sticky; top: 0; z-index: 10; backdrop-filter: saturate(1.6) blur(14px);
+  background: color-mix(in srgb, var(--bg) 78%, transparent); border-bottom: 1px solid var(--line); }
+nav .wrap { display: flex; align-items: center; gap: 20px; height: 56px; }
+.brand { display: flex; align-items: center; gap: 9px; font-weight: 650; text-decoration: none; letter-spacing: -.01em; }
+.brand svg { width: 24px; height: 24px; }
+nav .links { margin-left: auto; display: flex; gap: 18px; font-size: 14px; color: var(--ink2); }
+nav .links a { text-decoration: none; } nav .links a:hover { color: var(--ink); }
+@media (max-width: 640px) { nav .links .opt { display: none; } }
+
+/* hero */
+.hero { padding: 72px 0 40px; text-align: center; }
+.eyebrow { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; color: var(--ink2);
+  border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; background: var(--card); }
+.eyebrow b { color: var(--accent); font-weight: 600; }
+h1 { font-size: clamp(38px, 6.4vw, 72px); line-height: 1.02; letter-spacing: -.035em; margin: 22px auto 18px; max-width: 14ch; font-weight: 720; }
+h1 .grad { background: linear-gradient(92deg, var(--accent), var(--copilot) 55%, var(--codex)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lede { font-size: clamp(17px, 2vw, 20px); color: var(--ink2); max-width: 640px; margin: 0 auto 30px; }
+.ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 11px; font-weight: 600; font-size: 15px;
+  text-decoration: none; border: 1px solid var(--line); background: var(--card); }
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn:hover { transform: translateY(-1px); } .btn { transition: transform .15s; }
+.vendors { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 28px; font-size: 13px; color: var(--ink2); }
+.chip { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px; background: var(--bg2); }
+.dot { width: 8px; height: 8px; border-radius: 3px; }
+
+/* showcase */
+.show { margin: 44px auto 0; position: relative; }
+.show .main { width: 100%; border-radius: 18px; box-shadow: var(--shadow); border: 1px solid var(--line); display: block; }
+.show .pop { position: absolute; right: -12px; bottom: -34px; width: min(30%, 300px); border-radius: 16px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+@media (max-width: 720px) { .show .pop { position: static; width: 70%; margin: 18px auto 0; display: block; } }
+.show .light-only { display: none; } .show .dark-only { display: block; }
+@media (prefers-color-scheme: light) { .show .light-only { display: block; } .show .dark-only { display: none; } }
+
+/* sections */
+section { padding: 88px 0 20px; }
+h2 { font-size: clamp(28px, 3.6vw, 42px); letter-spacing: -.025em; line-height: 1.1; margin: 0 0 12px; font-weight: 700; }
+.sub { color: var(--ink2); font-size: 18px; max-width: 680px; margin: 0 0 36px; }
+.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
+.card h3 { margin: 10px 0 6px; font-size: 17px; letter-spacing: -.01em; }
+.card p { margin: 0; color: var(--ink2); font-size: 15px; }
+.icon { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; color: #fff; font-size: 17px; }
+
+/* pace demo */
+.pace { display: grid; gap: 20px; grid-template-columns: 1.1fr 1fr; align-items: center; }
+@media (max-width: 820px) { .pace { grid-template-columns: 1fr; } }
+.meter { margin: 18px 0; }
+.meter .top { display: flex; justify-content: space-between; font-weight: 600; font-size: 15px; }
+.bar { position: relative; height: 8px; border-radius: 99px; background: var(--bg2); margin: 8px 0 6px; overflow: visible; }
+.bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 99px; }
+.bar b { position: absolute; top: -3px; width: 2px; height: 14px; background: var(--ink3); border-radius: 1px; }
+.meter .foot { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink3); }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.legend { font-size: 13px; color: var(--ink3); }
+
+/* lanes table */
+.lanes { width: 100%; border-collapse: collapse; font-size: 15px; }
+.lanes th, .lanes td { text-align: left; padding: 14px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.lanes th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink3); font-weight: 600; }
+.lanes td:first-child { font-weight: 600; white-space: nowrap; }
+.lanes td { color: var(--ink2); } .lanes td:first-child { color: var(--ink); }
+.tag { font-size: 11px; font-weight: 700; letter-spacing: .04em; border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; margin-left: 6px; color: var(--ink3); }
+.scroll { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 16px; }
+
+/* platforms */
+.plat img { width: 100%; border-radius: 12px; border: 1px solid var(--line); margin-top: 16px; display: block; }
+pre { background: var(--bg2); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; overflow-x: auto; margin: 14px 0 0; line-height: 1.5; }
+.card ul { margin: 12px 0 0; padding-left: 18px; color: var(--ink2); font-size: 15px; }
+.card li { margin: 4px 0; }
+
+/* privacy */
+.privacy { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: clamp(24px, 4vw, 44px); }
+.checks { display: grid; gap: 14px 28px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-top: 20px; }
+.checks div { display: flex; gap: 10px; color: var(--ink2); font-size: 15px; }
+.checks svg { flex: none; width: 20px; height: 20px; color: var(--grok); margin-top: 2px; }
+
+details { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin: 10px 0; }
+summary { cursor: pointer; font-weight: 600; }
+details p { color: var(--ink2); margin: 10px 0 0; }
+
+footer { padding: 70px 0 50px; color: var(--ink3); font-size: 14px; }
+footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 26px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="6" fill="currentColor"/><rect x="5" y="14" width="3" height="5" rx="1" fill="var(--accent)"/><rect x="10.5" y="9" width="3" height="10" rx="1" fill="var(--copilot)"/><rect x="16" y="5" width="3" height="14" rx="1" fill="var(--codex)"/></svg>
+      TokenMeter
+    </a>
+    <div class="links">
+      <a href="#features" class="opt">Features</a>
+      <a href="#lanes" class="opt">Lanes</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/patrickking67/ai-usage-widgets">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow"><b>New</b> Copilot lane, desktop dashboard, Windows client</span>
+    <h1>Every AI coding limit, <span class="grad">on one meter.</span></h1>
+    <p class="lede">TokenMeter shows how much of your Claude Code, Codex, GitHub Copilot and Cursor plans you have left, whether you're on pace to run out before the reset, and what's actually spending your tokens.</p>
+    <div class="ctas">
+      <a class="btn primary" href="#install">Get TokenMeter</a>
+      <a class="btn" href="https://github.com/patrickking67/ai-usage-widgets">View source</a>
+    </div>
+    <div class="vendors">
+      <span class="chip"><span class="dot" style="background:var(--accent)"></span>Claude Code</span>
+      <span class="chip"><span class="dot" style="background:var(--codex)"></span>Codex</span>
+      <span class="chip"><span class="dot" style="background:var(--copilot)"></span>GitHub Copilot</span>
+      <span class="chip"><span class="dot" style="background:var(--cursor)"></span>Cursor <span class="tag">BETA</span></span>
+      <span class="chip"><span class="dot" style="background:var(--grok)"></span>Grok <span class="tag">BETA</span></span>
+    </div>
+
+    <div class="show">
+      <img class="main dark-only" src="img/shot-dashboard-dark.png" alt="TokenMeter dashboard: limits for Claude Code, Codex, Copilot and Cursor beside 30 days of token activity" width="1600">
+      <img class="main light-only" src="img/shot-dashboard.png" alt="TokenMeter dashboard in light mode" width="1600">
+      <img class="pop" src="img/shot-dark.png" alt="TokenMeter menu bar popover" width="360">
+    </div>
+  </div>
+</header>
+
+<section id="features">
+  <div class="wrap">
+    <h2>Not another percentage.</h2>
+    <p class="sub">A number that says 60% means nothing without time. TokenMeter reads each window's length and reset, so it can tell you whether 60% is fine or a problem.</p>
+    <div class="grid">
+      <div class="card"><div class="icon" style="background:var(--accent)">⏱</div><h3>Pace, not just percent</h3><p>A notch marks even pace on every bar. Past it, the bar turns amber, and a flame appears in the menu bar when you're on course to run out before the reset.</p></div>
+      <div class="card"><div class="icon" style="background:var(--codex)">▦</div><h3>Where the tokens went</h3><p>30 days of tokens per vendor from local logs, split into input, output and cache, plus which MCP servers, skills and subagents were running while your limit dropped.</p></div>
+      <div class="card"><div class="icon" style="background:var(--copilot)">◧</div><h3>Menu bar, desktop, widgets</h3><p>A glanceable popover, a full dashboard window, and WidgetKit widgets that stay readable on any wallpaper, even when macOS strips their colour.</p></div>
+      <div class="card"><div class="icon" style="background:var(--grok)">🔔</div><h3>Alerts that mean something</h3><p>One notification at 80% and one at 95% per window, plus an "all clear" when a window you were pushing against resets.</p></div>
+      <div class="card"><div class="icon" style="background:var(--cursor)">⌘</div><h3>Inside Claude Code</h3><p>A plugin with <code>/usage</code>, weekly reports and a limit-aware planning skill, so Claude sizes big tasks to the headroom you actually have.</p></div>
+      <div class="card"><div class="icon" style="background:#222">⊞</div><h3>macOS and Windows</h3><p>A native SwiftUI app on the Mac, and a tray app with a desktop widget on Windows. Both read and write the same documented board file.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap pace">
+    <div>
+      <h2>Same 60%. Different story.</h2>
+      <p class="sub">Drag the slider to see the same usage at different points in a five-hour window. The colour follows the projection at reset, not the raw number.</p>
+      <p class="legend">Cyan: on track · Amber: projected past 100% · Red: projected past 130%, or 90% already used.</p>
+    </div>
+    <div class="card">
+      <div class="meter">
+        <div class="top"><span>Current</span><span id="pct">60%</span></div>
+        <div class="bar"><i id="fill"></i><b id="notch"></b></div>
+        <div class="foot"><span id="left"></span><span id="proj"></span></div>
+      </div>
+      <label class="legend" for="elapsed">Time into the window</label>
+      <input id="elapsed" type="range" min="10" max="98" value="30">
+    </div>
+  </div>
+</section>
+
+<section id="lanes">
+  <div class="wrap">
+    <h2>Five lanes, honestly sourced.</h2>
+    <p class="sub">Each lane reads from where that vendor already keeps its data. Lanes whose source couldn't be checked against a real account are marked beta, and TokenMeter won't show a number it can't justify.</p>
+    <div class="scroll">
+    <table class="lanes">
+      <thead><tr><th>Lane</th><th>Limits from</th><th>Activity from</th></tr></thead>
+      <tbody>
+        <tr><td>Claude Code</td><td>The status line feed, plus Anthropic's usage endpoint using Claude Code's own sign-in: 5-hour, weekly and per-model windows, and extra spend.</td><td>Transcripts in <code>~/.claude/projects</code>, deduplicated per message.</td></tr>
+        <tr><td>Codex</td><td>The <code>rate_limits</code> Codex records after every turn.</td><td>Token counts in Codex session rollouts.</td></tr>
+        <tr><td>GitHub Copilot</td><td>The premium-request allowance, requested through the <code>gh</code> CLI's sign-in. Seats without a cap show credits used.</td><td>VS Code agent-mode chat sessions.</td></tr>
+        <tr><td>Cursor<span class="tag">BETA</span></td><td>Cursor's monthly usage pool and on-demand spend, using Cursor's local sign-in.</td><td>—</td></tr>
+        <tr><td>Grok<span class="tag">BETA</span></td><td>The SuperGrok credit pool the <code>grok</code> CLI reports for <code>/usage</code>.</td><td>—</td></tr>
+        <tr><td>Microsoft 365 Copilot</td><td colspan="2">No lane. Microsoft exposes Copilot usage only to tenant admins, with no per-person limit to show.</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="privacy">
+      <h2>Reads. Never writes.</h2>
+      <p class="sub" style="margin-bottom:0">TokenMeter borrows sign-ins that are already on your machine, and only to read.</p>
+      <div class="checks">
+        <div><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10.5l4 4 8-9"/></svg><span>Never refreshes, rotates or stores a vendor token, so it can't sign your tools out.</span></div>
+        <div><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10.5l4 4 8-9"/></svg><span>Claude's token is read with the same trusted <code>security</code> tool Claude Code uses, so there are no Keychain prompts.</span></div>
+        <div><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10.5l4 4 8-9"/></svg><span>Copilot requests go through <code>gh</code>, so the GitHub token never leaves it.</span></div>
+        <div><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10.5l4 4 8-9"/></svg><span>Activity comes from local logs on this machine. There's no server, account or telemetry.</span></div>
+        <div><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10.5l4 4 8-9"/></svg><span>Requests go only to the vendors' own endpoints, listed in the spec.</span></div>
+        <div><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10.5l4 4 8-9"/></svg><span>MIT licensed. Every source and field is documented in <code>spec/</code>.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <h2>Install</h2>
+    <p class="sub">Three clients, one board file. Install any of them, or all three.</p>
+    <div class="grid plat">
+      <div class="card">
+        <h3>macOS 14+</h3>
+        <p>Menu bar app, dashboard window and two desktop widgets. Build it from source with Xcode:</p>
+<pre>brew install xcodegen
+git clone https://github.com/patrickking67/ai-usage-widgets
+cd tokenmeter/apps/macos
+xcodegen generate && open TokenMeter.xcodeproj</pre>
+        <img src="img/shot-widget.png" alt="TokenMeter activity widgets on the macOS desktop" loading="lazy">
+      </div>
+      <div class="card">
+        <h3>Windows 10 / 11</h3>
+        <p>A tray icon, a desktop widget, and the same Settings and alerts. PowerShell 7 and WPF, with nothing extra to install:</p>
+<pre>git clone https://github.com/patrickking67/ai-usage-widgets
+cd tokenmeter\apps\windows
+.\install.ps1</pre>
+        <ul><li>Starts at sign-in and writes <code>%LOCALAPPDATA%\TokenMeter\board.json</code></li><li>Reads Claude Code, Codex and Copilot the same way the Mac app does</li></ul>
+      </div>
+      <div class="card">
+        <h3>Claude Code plugin</h3>
+        <p>Limits and reports inside Claude Code, and a planning skill that checks your remaining headroom before starting a big task:</p>
+<pre>/plugin marketplace add patrickking67/ai-usage-widgets
+/plugin install tokenmeter@tokenmeter</pre>
+        <ul><li><code>/usage</code> shows limits, pace and the current hot window</li><li><code>/report</code> gives a weekly breakdown by vendor, model and driver</li><li>A statusline helper and a session-start heads-up</li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Questions</h2>
+    <details><summary>Does it count usage from claude.ai, chatgpt.com or other machines?</summary><p>Limits, yes: they come from the vendor, so they include everything. Activity, no: it's built from logs on this machine, which is why each chart says so.</p></details>
+    <details><summary>Why did my Keychain keep prompting with other tools?</summary><p>An app that reads Claude Code's Keychain item directly raises a prompt, and the grant resets every time Claude Code refreshes its token. TokenMeter asks the <code>security</code> tool, which the item already trusts.</p></details>
+    <details><summary>What does "on pace for 36%" mean?</summary><p>If you keep going at your current rate, that's where the window will be when it resets. Anything projected past 100% turns amber.</p></details>
+    <details><summary>Can I add another tool?</summary><p>Each lane is one small source that produces a <code>ProviderUsage</code>. The board format is documented in <code>spec/board.md</code>, and every client skips vendors it doesn't know yet.</p></details>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>TokenMeter · MIT · by <a href="https://github.com/patrickking67">Patrick King</a></span>
+    <span>Not affiliated with Anthropic, OpenAI, GitHub, Microsoft, Anysphere or xAI.</span>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const s = document.getElementById('elapsed'), used = 60;
+  const fill = document.getElementById('fill'), notch = document.getElementById('notch');
+  const left = document.getElementById('left'), proj = document.getElementById('proj');
+  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  function draw() {
+    const e = +s.value / 100, p = used / e;
+    fill.style.width = used + '%';
+    notch.style.left = `calc(${e * 100}% - 1px)`;
+    fill.style.background = css(used >= 90 || p >= 130 ? '--red' : used >= 70 || p >= 100 ? '--amber' : '--cyan');
+    const mins = Math.round((1 - e) * 300);
+    left.textContent = `${Math.floor(mins / 60)} hr ${mins % 60} min left`;
+    proj.textContent = `On pace for ${Math.round(p)}%`;
+  }
+  s.addEventListener('input', draw); draw();
+})();
+</script>
+</body>
+</html>

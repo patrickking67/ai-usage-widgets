@@ -1,0 +1,366 @@
+{
+ "providers": [
+  {
+   "account": "Personal",
+   "vendor": "claude",
+   "updatedAt": 1790560061.790242,
+   "plan": "Max 20x",
+   "meters": [
+    {
+     "windowSeconds": 18000,
+     "label": "Current",
+     "used": 5,
+     "resetsAt": 1790570413.032537
+    },
+    {
+     "windowSeconds": 604800,
+     "label": "Weekly",
+     "used": 22,
+     "resetsAt": 1790798413.032537
+    }
+   ]
+  },
+  {
+   "account": "Acme",
+   "vendor": "codex",
+   "updatedAt": 1790567201.790242,
+   "plan": "Business",
+   "meters": [
+    {
+     "windowSeconds": 604800,
+     "label": "Weekly",
+     "used": 22,
+     "resetsAt": 1791127205.626537
+    }
+   ]
+  },
+  {
+   "account": "Acme",
+   "vendor": "copilot",
+   "updatedAt": 1790567201.790242,
+   "plan": "Business",
+   "note": "1,922 premium credits this month \u00b7 no cap",
+   "meters": []
+  },
+  {
+   "vendor": "cursor",
+   "account": "Personal",
+   "plan": "Pro",
+   "experimental": true,
+   "updatedAt": 1790566961.790242,
+   "meters": [
+    {
+     "label": "Monthly",
+     "used": 38,
+     "resetsAt": 1791344861.790242,
+     "windowSeconds": 2592000
+    }
+   ],
+   "extra": {
+    "used": 3.5,
+    "limit": 50
+   }
+  }
+ ],
+ "activity": {
+  "longContextShare": 0.54,
+  "models": [
+   {
+    "tokens": 421556711,
+    "vendor": "claude",
+    "model": "claude-opus-5-5"
+   },
+   {
+    "vendor": "copilot",
+    "model": "auto",
+    "tokens": 51000000.0
+   },
+   {
+    "tokens": 32746178,
+    "vendor": "claude",
+    "model": "claude-opus-5"
+   },
+   {
+    "tokens": 14648303,
+    "vendor": "claude",
+    "model": "claude-fable-5-1"
+   },
+   {
+    "tokens": 1607616,
+    "vendor": "claude",
+    "model": "claude-sonnet-5"
+   },
+   {
+    "tokens": 947171,
+    "vendor": "codex",
+    "model": "gpt-6-astra"
+   },
+   {
+    "tokens": 426600,
+    "vendor": "claude",
+    "model": "claude-opus-4-8"
+   },
+   {
+    "tokens": 3769,
+    "vendor": "claude",
+    "model": "claude-haiku-4-5-20251001"
+   }
+  ],
+  "drivers": [
+   {
+    "name": "GitHub",
+    "kind": "MCP",
+    "calls": 212,
+    "share": 0.62
+   },
+   {
+    "name": "Playwright",
+    "kind": "MCP",
+    "calls": 215,
+    "share": 0.41
+   },
+   {
+    "name": "Linear",
+    "kind": "MCP",
+    "calls": 216,
+    "share": 0.33
+   },
+   {
+    "name": "Context7",
+    "kind": "MCP",
+    "calls": 213,
+    "share": 0.27
+   },
+   {
+    "name": "code-reviewer",
+    "kind": "Subagent",
+    "calls": 65,
+    "share": 0.22
+   },
+   {
+    "name": "frontend-design",
+    "kind": "Skill",
+    "calls": 258,
+    "share": 0.18
+   },
+   {
+    "name": "Sentry",
+    "kind": "MCP",
+    "calls": 336,
+    "share": 0.12
+   },
+   {
+    "name": "test-runner",
+    "kind": "Subagent",
+    "calls": 217,
+    "share": 0.09
+   }
+  ],
+  "days": [
+   {
+    "day": 1787986800,
+    "claude": 5605008,
+    "codex": 5417902,
+    "copilot": 1579490
+   },
+   {
+    "day": 1788073200,
+    "claude": 0,
+    "codex": 6608798,
+    "copilot": 5059486
+   },
+   {
+    "day": 1788159600,
+    "claude": 256913,
+    "codex": 7686173,
+    "copilot": 1725704
+   },
+   {
+    "day": 1788246000,
+    "claude": 29161463,
+    "codex": 14171771,
+    "copilot": 2785912
+   },
+   {
+    "day": 1788332400,
+    "claude": 30324007,
+    "codex": 22518481,
+    "copilot": 4173444
+   },
+   {
+    "day": 1788418800,
+    "claude": 25199226,
+    "codex": 47324785,
+    "copilot": 3316874
+   },
+   {
+    "day": 1788505200,
+    "claude": 8619116,
+    "codex": 260909133,
+    "copilot": 7529011
+   },
+   {
+    "day": 1788591600,
+    "claude": 0,
+    "codex": 15120750,
+    "copilot": 3979180
+   },
+   {
+    "day": 1788678000,
+    "claude": 0,
+    "codex": 2189653,
+    "copilot": 2647670
+   },
+   {
+    "day": 1788764400,
+    "claude": 24066980,
+    "codex": 9331462,
+    "copilot": 5684495
+   },
+   {
+    "day": 1788850800,
+    "claude": 11913023,
+    "codex": 9576217,
+    "copilot": 6591955
+   },
+   {
+    "day": 1788937200,
+    "claude": 23962522,
+    "codex": 13920540,
+    "copilot": 8001100
+   },
+   {
+    "day": 1789023600,
+    "claude": 10059621,
+    "codex": 10244516,
+    "copilot": 1944526
+   },
+   {
+    "day": 1789110000,
+    "claude": 70544261,
+    "codex": 13418943,
+    "copilot": 4911705
+   },
+   {
+    "day": 1789196400,
+    "claude": 71179997,
+    "codex": 78070582,
+    "copilot": 5584208
+   },
+   {
+    "day": 1789282800,
+    "claude": 50869570,
+    "codex": 166649988,
+    "copilot": 5754959
+   },
+   {
+    "day": 1789369200,
+    "claude": 18612274,
+    "codex": 13791724,
+    "copilot": 8557449
+   },
+   {
+    "day": 1789455600,
+    "claude": 102117846,
+    "codex": 10994157,
+    "copilot": 6611936
+   },
+   {
+    "day": 1789542000,
+    "claude": 72520093,
+    "codex": 30018807,
+    "copilot": 3276764
+   },
+   {
+    "day": 1789628400,
+    "claude": 207616,
+    "codex": 10662680,
+    "copilot": 4693562
+   },
+   {
+    "day": 1789714800,
+    "claude": 20024908,
+    "codex": 2981933,
+    "copilot": 7145864
+   },
+   {
+    "day": 1789801200,
+    "claude": 0,
+    "codex": 6422133,
+    "copilot": 7971376
+   },
+   {
+    "day": 1789887600,
+    "claude": 0,
+    "codex": 11463975,
+    "copilot": 8067071
+   },
+   {
+    "day": 1789974000,
+    "claude": 5659057,
+    "codex": 16776701,
+    "copilot": 4322372
+   },
+   {
+    "day": 1790060400,
+    "claude": 26472080,
+    "codex": 26237242,
+    "copilot": 2207367
+   },
+   {
+    "day": 1790146800,
+    "claude": 61615463,
+    "codex": 5427918,
+    "copilot": 4879702
+   },
+   {
+    "day": 1790233200,
+    "claude": 11555737,
+    "codex": 4845659,
+    "copilot": 4351572
+   },
+   {
+    "day": 1790319600,
+    "claude": 14398945,
+    "codex": 17608172,
+    "copilot": 6523949
+   },
+   {
+    "day": 1790406000,
+    "claude": 100492251,
+    "codex": 16297325,
+    "copilot": 1431943
+   },
+   {
+    "day": 1790492400,
+    "claude": 93178705,
+    "codex": 22425887,
+    "copilot": 7382985
+   }
+  ],
+  "codex24h": {
+   "output": 2353,
+   "cacheRead": 920698,
+   "cacheWrite": 0,
+   "requests": 148,
+   "input": 26640
+  },
+  "generatedAt": 1790567261.790242,
+  "claude24h": {
+   "output": 90062,
+   "cacheRead": 101635339,
+   "cacheWrite": 2278525,
+   "requests": 5918,
+   "input": 1380
+  },
+  "subagentShare": 0.31,
+  "copilot24h": {
+   "input": 3900000.0,
+   "output": 210000.0,
+   "cacheRead": 0,
+   "cacheWrite": 0,
+   "requests": 46
+  }
+ },
+ "generatedAt": 1790567261.790242
+}

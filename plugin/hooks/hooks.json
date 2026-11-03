@@ -1,0 +1,17 @@
+{
+  "description": "TokenMeter: at session start, add a one-line note to Claude's context when Claude plan headroom is tight or critical. Silent otherwise.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

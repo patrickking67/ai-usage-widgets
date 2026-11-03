@@ -1,0 +1,8 @@
+// Shared build settings. Put your own signing team in Local.xcconfig:
+//
+//   DEVELOPMENT_TEAM = ABCDE12345
+//
+// Local.xcconfig is gitignored. Without it the app builds ad-hoc signed, which
+// runs the menu-bar app and dashboard but not the WidgetKit widgets: macOS only
+// loads widget extensions signed with a real team.
+#include? "Local.xcconfig"

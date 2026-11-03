@@ -1,0 +1,13 @@
+{
+  "name": "tokenmeter",
+  "version": "1.0.0",
+  "description": "See your Claude Code, Codex and Copilot plan limits and token activity inside Claude Code, and let Claude plan big tasks around the headroom you actually have. Reads the local TokenMeter board; never needs credentials.",
+  "author": {
+    "name": "Patrick King",
+    "url": "https://github.com/patrickking67"
+  },
+  "homepage": "https://github.com/patrickking67/ai-usage-widgets",
+  "repository": "https://github.com/patrickking67/ai-usage-widgets",
+  "license": "MIT",
+  "keywords": ["usage", "limits", "rate-limits", "tokens", "claude-code", "codex", "copilot", "budget", "statusline"]
+}

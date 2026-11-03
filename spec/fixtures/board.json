@@ -1,0 +1,170 @@
+{
+  "activity": {
+    "claude24h": {
+      "cacheWrite": 41197917,
+      "output": 1627625,
+      "requests": 5388,
+      "input": 26528,
+      "cacheRead": 1876942725
+    },
+    "models": [
+      {
+        "model": "claude-opus-5-5",
+        "tokens": 8270898277,
+        "vendor": "claude"
+      },
+      {
+        "model": "claude-opus-5",
+        "tokens": 654923563,
+        "vendor": "claude"
+      },
+      {
+        "model": "claude-fable-5-1",
+        "tokens": 292966064,
+        "vendor": "claude"
+      },
+      {
+        "model": "gpt-6-astra",
+        "tokens": 99088181,
+        "vendor": "codex"
+      },
+      {
+        "model": "claude-sonnet-5",
+        "tokens": 32152322,
+        "vendor": "claude"
+      },
+      {
+        "model": "claude-opus-4-8",
+        "tokens": 8532002,
+        "vendor": "claude"
+      }
+    ],
+    "generatedAt": 1790566351.079509,
+    "subagentShare": 0.7006521256872144,
+    "drivers": [
+      {
+        "calls": 2898,
+        "share": 0.8430079257507311,
+        "name": "Desktop Commander",
+        "kind": "MCP"
+      },
+      {
+        "calls": 288,
+        "share": 0.28741856287822676,
+        "name": "Claude Browser",
+        "kind": "MCP"
+      },
+      {
+        "calls": 237,
+        "share": 0.2789017781455127,
+        "name": "Claude Platform",
+        "kind": "MCP"
+      },
+      {
+        "calls": 48,
+        "share": 0.23155188989873263,
+        "name": "Parallel Search",
+        "kind": "MCP"
+      },
+      {
+        "calls": 21,
+        "share": 0.20448855993486534,
+        "name": "Cloudflare",
+        "kind": "MCP"
+      },
+      {
+        "calls": 24,
+        "share": 0.20400469363706136,
+        "name": "claude.ai connector",
+        "kind": "MCP"
+      }
+    ],
+    "days": [
+      {
+        "codex": 92129483,
+        "claude": 128245957,
+        "day": 1789974000
+      },
+      {
+        "codex": 0,
+        "claude": 907819706,
+        "day": 1790060400
+      },
+      {
+        "codex": 0,
+        "claude": 2652742961,
+        "day": 1790146800
+      },
+      {
+        "codex": 0,
+        "claude": 315329764,
+        "day": 1790233200
+      },
+      {
+        "codex": 0,
+        "claude": 488087574,
+        "day": 1790319600
+      },
+      {
+        "codex": 0,
+        "claude": 2933782950,
+        "day": 1790406000
+      },
+      {
+        "codex": 6958698,
+        "claude": 1833463316,
+        "day": 1790492400
+      }
+    ],
+    "longContextShare": 0.9996467961045805,
+    "codex24h": {
+      "cacheWrite": 0,
+      "output": 18413,
+      "requests": 53,
+      "input": 207485,
+      "cacheRead": 6732800
+    }
+  },
+  "providers": [
+    {
+      "vendor": "claude",
+      "account": "Personal",
+      "plan": "Max 20x",
+      "meters": [
+        {
+          "label": "Current",
+          "used": 5,
+          "resetsAt": 1790570400.704,
+          "windowSeconds": 18000
+        },
+        {
+          "label": "Weekly",
+          "used": 22,
+          "resetsAt": 1790798400.704,
+          "windowSeconds": 604800
+        },
+        {
+          "label": "Nimbus Quill",
+          "used": 0,
+          "windowSeconds": 604800
+        }
+      ],
+      "updatedAt": 1790566341.8004751
+    },
+    {
+      "vendor": "codex",
+      "account": "Acme",
+      "plan": "Business",
+      "meters": [
+        {
+          "label": "Weekly",
+          "used": 10,
+          "resetsAt": 1791127193,
+          "windowSeconds": 604800
+        }
+      ],
+      "updatedAt": 1790566410.8594384
+    }
+  ],
+  "generatedAt": 1790566411.080235
+}
