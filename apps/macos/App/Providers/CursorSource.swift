@@ -66,7 +66,8 @@ final class CursorSource: ProviderSource {
                         return u / l * 100
                     }() {
             // Either end of the cycle can be missing; fall back to a month.
-            let span = start.flatMap { s in end.map { $0 - s } }.flatMap { $0 > 0 ? $0 : nil } ?? 30 * 86_400
+            var span: TimeInterval = 30 * 86_400
+            if let start, let end, end > start { span = end - start }
             meters.append(Meter(label: "Monthly", used: pct, resetsAt: end, windowSeconds: span))
         }
         let onDemand = (individual?["onDemand"] as? [String: Any])
