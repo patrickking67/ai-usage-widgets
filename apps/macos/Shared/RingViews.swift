@@ -52,6 +52,9 @@ struct RingStack: View {
             }
             .frame(maxWidth: .infinity)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Plan limits")
+        .accessibilityValue(providers.map { $0.spokenHottest(at: now) }.joined(separator: "; "))
     }
 }
 
@@ -123,6 +126,9 @@ private struct RingCell: View {
                 .font(.system(size: 9)).foregroundStyle(.secondary).monospacedDigit().lineLimit(1)
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(provider.vendor.displayName)
+        .accessibilityValue(m.map { "\($0.label), " + $0.spokenSummary(at: now) } ?? "no limits reported")
     }
 }
 

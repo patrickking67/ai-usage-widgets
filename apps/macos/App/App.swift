@@ -207,6 +207,10 @@ struct MenuBarLabel: View {
                 VendorMark(vendor: .claude)
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("TokenMeter")
+        .accessibilityValue((board?.providers ?? []).filter { !$0.meters.isEmpty && MenuBarPrefs.shows($0.vendor) }
+            .map { $0.spokenHottest(at: now) }.joined(separator: "; "))
     }
 }
 
@@ -238,7 +242,7 @@ struct PopoverView: View {
                     .padding(2).background(.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 7))
                     Image(systemName: "arrow.clockwise").foregroundStyle(.secondary)
                 } else {
-                    Picker("", selection: $tab) {
+                    Picker("View", selection: $tab) {
                         Text("Limits").tag(0)
                         Text("Activity").tag(1)
                     }
@@ -246,6 +250,7 @@ struct PopoverView: View {
                     Button(action: refresh) { Image(systemName: "arrow.clockwise") }
                         .buttonStyle(.borderless)
                         .help("Refresh")
+                        .accessibilityLabel("Refresh limits")
                 }
             }
 
