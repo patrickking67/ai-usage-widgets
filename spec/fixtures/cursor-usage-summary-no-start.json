@@ -1,0 +1,8 @@
+{
+  "billingCycleEnd": "1790812800000",
+  "membershipType": "pro",
+  "limitType": "user",
+  "individualUsage": {
+    "plan": { "enabled": true, "used": 300, "limit": 2000, "totalPercentUsed": 15.0 }
+  }
+}

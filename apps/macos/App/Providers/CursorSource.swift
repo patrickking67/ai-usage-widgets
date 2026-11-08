@@ -65,8 +65,9 @@ final class CursorSource: ProviderSource {
                         guard let u = Local.number(planUsage["used"]), let l = Local.number(planUsage["limit"]), l > 0 else { return nil }
                         return u / l * 100
                     }() {
-            meters.append(Meter(label: "Monthly", used: pct, resetsAt: end,
-                                windowSeconds: (end ?? 0) - (start ?? 0) > 0 ? end! - start! : 30 * 86_400))
+            // Either end of the cycle can be missing; fall back to a month.
+            let span = start.flatMap { s in end.map { $0 - s } }.flatMap { $0 > 0 ? $0 : nil } ?? 30 * 86_400
+            meters.append(Meter(label: "Monthly", used: pct, resetsAt: end, windowSeconds: span))
         }
         let onDemand = (individual?["onDemand"] as? [String: Any])
             ?? ((root["teamUsage"] as? [String: Any])?["onDemand"] as? [String: Any])

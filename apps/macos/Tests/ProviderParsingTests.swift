@@ -148,6 +148,15 @@ final class CursorParsingTests: XCTestCase {
         XCTAssertEqual(CursorSource.decode(root, planHint: "pro", override: nil).plan, "Pro")
     }
 
+    func testCycleEndWithoutStartFallsBackToAMonth() throws {
+        // Used to force-unwrap the missing start and crash the app.
+        let p = CursorSource.decode(try Fixture.json("cursor-usage-summary-no-start.json"), planHint: nil, override: nil)
+        let m = try XCTUnwrap(p.meters.first)
+        XCTAssertEqual(m.used, 15)
+        XCTAssertEqual(m.resetsAt, 1_790_812_800, "epoch milliseconds as a string")
+        XCTAssertEqual(m.windowSeconds, 30 * 86_400)
+    }
+
     func testUnlimitedPlanHasANoteAndNoMeter() {
         let p = CursorSource.decode(["isUnlimited": true, "limitType": "team"], planHint: nil, override: nil)
         XCTAssertTrue(p.meters.isEmpty)
