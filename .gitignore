@@ -16,3 +16,9 @@ apps/macos/*.xcodeproj/
 
 # Windows build output
 apps/windows/out/
+
+# Local environment and tooling
+.env
+.env.*
+.venv/
+*.xcresult
