@@ -1,0 +1,20 @@
+{
+  "five_hour": { "utilization": 12.0, "resets_at": "2026-09-04T21:00:00Z" },
+  "seven_day": { "utilization": 30.0, "resets_at": "2026-09-08T00:00:00Z" },
+  "iguana_necktie": { "utilization": 99.0, "resets_at": "2026-09-08T00:00:00Z" },
+  "extra_usage": { "is_enabled": false, "used_credits": 0, "monthly_limit": null },
+  "limits": [
+    { "group": "weekly", "kind": "seven_day", "percent": 41.0, "resets_at": "2026-09-08T00:00:00Z" },
+    { "group": "session", "kind": "five_hour", "percent": 23.5, "resets_at": "2026-09-04T21:00:00.000Z" },
+    { "group": "weekly", "kind": "seven_day", "percent": 64.0, "resets_at": "2026-09-08T00:00:00Z",
+      "scope": { "model": { "display_name": "Opus" } } },
+    { "group": "weekly", "kind": "seven_day", "resets_at": "2026-09-08T00:00:00Z" }
+  ],
+  "seven_day_breakdown": {
+    "rows": [
+      { "display_name": "Claude Code", "percent": 34.0 },
+      { "display_name": "Chats", "percent": 0 },
+      { "display_name": "Cowork", "percent": 46.0 }
+    ]
+  }
+}

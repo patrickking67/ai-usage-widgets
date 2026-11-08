@@ -1,0 +1,9 @@
+{
+  "config": {
+    "creditUsagePercent": 18.5,
+    "subscriptionTier": "SuperGrok",
+    "currentPeriod": { "type": "PERIOD_TYPE_MONTHLY", "start": "2026-09-01T00:00:00Z", "end": "2026-10-01T00:00:00Z" },
+    "onDemandCap": { "val": 2500 },
+    "onDemandUsed": { "val": 120 }
+  }
+}

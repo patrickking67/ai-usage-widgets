@@ -1,0 +1,7 @@
+{
+  "copilot_plan": "business",
+  "organization_login_list": ["example-org"],
+  "quota_snapshots": {
+    "premium_interactions": { "unlimited": true, "credits_used": 1894, "timestamp_utc": "2026-09-14T10:00:00.250Z" }
+  }
+}

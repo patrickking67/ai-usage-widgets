@@ -19,6 +19,8 @@ targets:
     type: application
     platform: macOS
     sources: [App, Shared]
+    scheme:
+      testTargets: [TokenMeterTests]
     dependencies:
       - target: TokenMeterWidget
         embed: true
@@ -65,3 +67,18 @@ targets:
     dependencies:
       - sdk: WidgetKit.framework
       - sdk: SwiftUI.framework
+  # Unit tests for the parsing code. Not hosted in the app, so running them
+  # never starts the collector, reads a credential or makes a request.
+  TokenMeterTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - Tests
+      - Shared/Usage.swift
+      - Shared/Activity.swift
+      - App/ClaudeLive.swift
+      - App/Providers
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.patrickking.tokenmeter.tests
+        GENERATE_INFOPLIST_FILE: YES

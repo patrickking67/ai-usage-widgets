@@ -56,20 +56,13 @@ final class CodexSource: ProviderSource {
             updated = live.fetchedAt
         } else if let (limits, mtime) = rollout {
             updated = mtime
-            for key in ["primary", "secondary"] {
-                guard let w = limits[key] as? [String: Any], let used = Local.number(w["used_percent"]) else { continue }
-                let minutes = Local.number(w["window_minutes"]) ?? 0
-                let resets = Local.number(w["resets_at"]) ?? Local.number(w["resets_in_seconds"]).map { mtime + $0 }
-                let label = Self.label(windowSeconds: minutes * 60)
-                meters.append(Meter(label: label, used: used, resetsAt: resets, windowSeconds: minutes * 60))
-            }
-            meters.sort { $0.windowSeconds < $1.windowSeconds }
+            meters = Self.rolloutMeters(limits, mtime: mtime)
         }
         let account = Local.override("codexAccountName") ?? (isWorkspace ? "" : "Personal")
         return ProviderUsage(vendor: .codex, account: account, plan: plan, meters: meters, updatedAt: updated)
     }
 
-    static func label(windowSeconds s: Double) -> String {
+    nonisolated static func label(windowSeconds s: Double) -> String {
         s >= 600_000 ? "Weekly" : s <= 18_000 ? "Current" : "\(Int(s / 3600))h"
     }
 
@@ -98,17 +91,9 @@ final class CodexSource: ProviderSource {
                     }
                     onUpdate?(); return
                 }
-                var meters: [Meter] = []
-                let rl = root["rate_limit"] as? [String: Any]
-                for key in ["primary_window", "secondary_window"] {
-                    guard let w = rl?[key] as? [String: Any], let used = Local.number(w["used_percent"]) else { continue }
-                    let span = Local.number(w["limit_window_seconds"]) ?? 0
-                    meters.append(Meter(label: Self.label(windowSeconds: span), used: used,
-                                        resetsAt: Local.number(w["reset_at"]), windowSeconds: span))
-                }
-                meters.sort { $0.windowSeconds < $1.windowSeconds }
+                let decoded = Self.decodeLive(root)
                 lastFetch = Date()
-                live = Live(plan: root["plan_type"] as? String ?? "", meters: meters, fetchedAt: lastFetch.timeIntervalSince1970)
+                live = Live(plan: decoded.plan, meters: decoded.meters, fetchedAt: lastFetch.timeIntervalSince1970)
                 problem = nil
                 onUpdate?()
             } catch {
@@ -117,7 +102,36 @@ final class CodexSource: ProviderSource {
         }
     }
 
-    static func planName(_ raw: String) -> String? {
+    /// The `wham/usage` response: `plan_type` and up to two windows under
+    /// `rate_limit`, shortest first.
+    nonisolated static func decodeLive(_ root: [String: Any]) -> (plan: String, meters: [Meter]) {
+        var meters: [Meter] = []
+        let rl = root["rate_limit"] as? [String: Any]
+        for key in ["primary_window", "secondary_window"] {
+            guard let w = rl?[key] as? [String: Any], let used = Local.number(w["used_percent"]) else { continue }
+            let span = Local.number(w["limit_window_seconds"]) ?? 0
+            meters.append(Meter(label: label(windowSeconds: span), used: used,
+                                resetsAt: Local.number(w["reset_at"]), windowSeconds: span))
+        }
+        meters.sort { $0.windowSeconds < $1.windowSeconds }
+        return (root["plan_type"] as? String ?? "", meters)
+    }
+
+    /// A rollout's `rate_limits` object. `resets_at` is absolute; older
+    /// Codex builds wrote `resets_in_seconds`, relative to the file's mtime.
+    nonisolated static func rolloutMeters(_ limits: [String: Any], mtime: Double) -> [Meter] {
+        var meters: [Meter] = []
+        for key in ["primary", "secondary"] {
+            guard let w = limits[key] as? [String: Any], let used = Local.number(w["used_percent"]) else { continue }
+            let minutes = Local.number(w["window_minutes"]) ?? 0
+            let resets = Local.number(w["resets_at"]) ?? Local.number(w["resets_in_seconds"]).map { mtime + $0 }
+            meters.append(Meter(label: label(windowSeconds: minutes * 60), used: used,
+                                resetsAt: resets, windowSeconds: minutes * 60))
+        }
+        return meters.sorted { $0.windowSeconds < $1.windowSeconds }
+    }
+
+    nonisolated static func planName(_ raw: String) -> String? {
         if raw.isEmpty { return nil }
         for (needle, name) in [("promax", "Pro Max"), ("enterprise", "Enterprise"), ("business", "Business"), ("team", "Team"),
                                ("edu", "Edu"), ("pro", "Pro"), ("plus", "Plus"), ("free", "Free")]
@@ -143,13 +157,21 @@ final class CodexSource: ProviderSource {
             }
         }
         for (file, mtime) in candidates.sorted(by: { $0.1 > $1.1 }).prefix(5) {
-            guard let tail = Local.readTail(file, bytes: 768 * 1024) else { continue }
-            for line in tail.split(separator: "\n").reversed() where line.contains("\"rate_limits\"") {
-                guard let obj = try? JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any],
-                      let limits = Local.findKey("rate_limits", in: obj) as? [String: Any],
-                      limits["primary"] is [String: Any] else { continue }
-                return (limits, mtime.timeIntervalSince1970)
-            }
+            guard let tail = Local.readTail(file, bytes: 768 * 1024),
+                  let limits = Self.lastLimits(inRollout: tail) else { continue }
+            return (limits, mtime.timeIntervalSince1970)
+        }
+        return nil
+    }
+
+    /// The last `rate_limits` object in a rollout's text with a non-null
+    /// `primary` window. Lines that do not parse (a tail cut mid-line) are skipped.
+    nonisolated static func lastLimits(inRollout text: String) -> [String: Any]? {
+        for line in text.split(separator: "\n").reversed() where line.contains("\"rate_limits\"") {
+            guard let obj = try? JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any],
+                  let limits = Local.findKey("rate_limits", in: obj) as? [String: Any],
+                  limits["primary"] is [String: Any] else { continue }
+            return limits
         }
         return nil
     }
