@@ -81,3 +81,7 @@ vendors' own dashboards count.
 Fixtures: `fixtures/board.json` is a real board, anonymised.
 `fixtures/typical.json` etc. are recorded Claude usage-endpoint responses;
 `fixtures/codex-*.jsonl` are recorded Codex rollouts.
+`claude-limits.json`, `codex-wham-usage.json`, `copilot-*.json`,
+`cursor-usage-summary-*.json` and `grok-credits-*.json` are synthetic: built
+by hand from the response shapes in `providers.md`, with made-up values.
+The macOS unit tests in `apps/macos/Tests` read them.

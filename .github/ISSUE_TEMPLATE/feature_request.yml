@@ -1,0 +1,19 @@
+name: Feature request
+description: A new lane, view or behaviour.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What you have in mind
+  - type: textarea
+    id: source
+    attributes:
+      label: Data source, for a new lane
+      description: Where the vendor keeps the figure, and whether it can be read without writing or refreshing a sign-in.

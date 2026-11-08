@@ -1,0 +1,2 @@
+# Per-developer signing team for the macOS widgets (team ID only, not a credential)
+apps/macos/Config/Local.xcconfig

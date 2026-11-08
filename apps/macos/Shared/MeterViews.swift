@@ -109,7 +109,12 @@ struct VendorIcon: View {
 
     init(vendor: Vendor, size: CGFloat = 18) { self.vendor = vendor; self.size = size }
 
+    /// Decorative: the vendor's name is always beside it or in the parent's label.
     var body: some View {
+        icon.accessibilityHidden(true)
+    }
+
+    @ViewBuilder private var icon: some View {
         if vibrant.wrappedValue {
             Group {
                 if let glyph = vendor.glyph {
@@ -205,6 +210,9 @@ struct ExtraRow: View {
                 UsageBar(fraction: f, tint: f >= 0.9 ? Palette.red : Palette.clay, height: 3)
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Extra usage")
+        .accessibilityValue(extra.text)
     }
 }
 
@@ -237,6 +245,9 @@ struct BreakdownRow: View {
                 .font(.system(size: 9.5)).foregroundStyle(.tertiary).lineLimit(1)
         }
         .help("Share of this week's usage by surface")
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Share of this week's usage")
+        .accessibilityValue(shares.map { "\($0.label) \(Int($0.percent.rounded())) percent" }.joined(separator: ", "))
     }
 }
 
@@ -309,6 +320,10 @@ struct MeterRow: View {
                 .font(.system(size: 10)).foregroundStyle(.tertiary).monospacedDigit().lineLimit(1)
             }
         }
+        // One element per window: the bar, notch and countdown read as a sentence.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(meter.label)
+        .accessibilityValue(meter.spokenSummary(at: now) + (stale ? ", may be out of date" : ""))
     }
 }
 
@@ -373,5 +388,7 @@ struct ProviderCard: View {
             FreshnessBadge(provider: provider, now: now, compact: compact)
         }
         .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
     }
 }

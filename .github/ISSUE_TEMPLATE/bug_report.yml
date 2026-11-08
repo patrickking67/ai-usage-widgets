@@ -1,0 +1,45 @@
+name: Bug report
+description: Something shows the wrong number, crashes or does not start.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Do not paste tokens, cookies, auth files or Keychain output. Redact account and org names."
+  - type: dropdown
+    id: client
+    attributes:
+      label: Client
+      options:
+        - macOS app or widgets
+        - Windows tray app
+        - Claude Code plugin
+        - Claude Code status line
+    validations:
+      required: true
+  - type: dropdown
+    id: lane
+    attributes:
+      label: Lane
+      options:
+        - Claude
+        - Codex
+        - GitHub Copilot
+        - Cursor
+        - Grok
+        - Not lane specific
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+  - type: input
+    id: version
+    attributes:
+      label: OS and TokenMeter version or commit

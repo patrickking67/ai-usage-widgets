@@ -12,18 +12,20 @@
 <link rel="icon" href="img/icon.svg" type="image/svg+xml">
 <style>
 :root {
-  --bg: #fbfaf8; --bg2: #f2f0ec; --card: #ffffff; --ink: #1b1a19; --ink2: #5d5a55; --ink3: #8f8a83;
-  --line: #e4e0d9; --accent: #d97856; --cyan: #4fb3ea; --amber: #d9a257; --red: #ef6f86;
+  --bg: #fbfaf8; --bg2: #f2f0ec; --card: #ffffff; --ink: #1b1a19; --ink2: #5d5a55; --ink3: #6e6962;
+  --line: #e4e0d9; --accent: #d97856; --accent-ink: #b4532f; --focus: #2563eb; --cyan: #4fb3ea; --amber: #d9a257; --red: #ef6f86;
   --codex: #4d85fa; --copilot: #8c5cf5; --cursor: #6b7280; --grok: #33c79e;
   --shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 40px -12px rgba(0,0,0,.18);
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #0f0f10; --bg2: #161618; --card: #1b1b1d; --ink: #f2f0ec; --ink2: #b3aea6; --ink3: #7c776f;
+  --bg: #0f0f10; --bg2: #161618; --card: #1b1b1d; --ink: #f2f0ec; --ink2: #b3aea6; --ink3: #8e8981;
   --line: #2a2a2d; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 20px 60px -20px rgba(0,0,0,.8);
+  --accent-ink: var(--accent); --focus: #7cb4ff;
 }}
 :root[data-theme="dark"] {
-  --bg: #0f0f10; --bg2: #161618; --card: #1b1b1d; --ink: #f2f0ec; --ink2: #b3aea6; --ink3: #7c776f;
+  --bg: #0f0f10; --bg2: #161618; --card: #1b1b1d; --ink: #f2f0ec; --ink2: #b3aea6; --ink3: #8e8981;
   --line: #2a2a2d; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 20px 60px -20px rgba(0,0,0,.8);
+  --accent-ink: var(--accent); --focus: #7cb4ff;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -31,6 +33,14 @@ body { margin: 0; background: var(--bg); color: var(--ink);
   font: 16px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased; }
 a { color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 4px; }
+.skip { position: absolute; left: 16px; top: -48px; z-index: 20; background: var(--card); color: var(--ink);
+  padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; }
+.skip:focus { top: 10px; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .btn, .btn:hover { transition: none; transform: none; }
+}
 code, pre { font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace; font-size: .88em; }
 .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
 @media (min-width: 720px) { .wrap { padding: 0 28px; } }
@@ -49,7 +59,7 @@ nav .links a { text-decoration: none; } nav .links a:hover { color: var(--ink); 
 .hero { padding: 72px 0 40px; text-align: center; }
 .eyebrow { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; color: var(--ink2);
   border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; background: var(--card); }
-.eyebrow b { color: var(--accent); font-weight: 600; }
+.eyebrow b { color: var(--accent-ink); font-weight: 600; }
 h1 { font-size: clamp(38px, 6.4vw, 72px); line-height: 1.02; letter-spacing: -.035em; margin: 22px auto 18px; max-width: 14ch; font-weight: 720; }
 h1 .grad { background: linear-gradient(92deg, var(--accent), var(--copilot) 55%, var(--codex)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .lede { font-size: clamp(17px, 2vw, 20px); color: var(--ink2); max-width: 640px; margin: 0 auto 30px; }
@@ -123,7 +133,9 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
 </head>
 <body>
 
-<nav>
+<a class="skip" href="#main">Skip to content</a>
+
+<nav aria-label="Primary">
   <div class="wrap">
     <a class="brand" href="#">
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="6" fill="currentColor"/><rect x="5" y="14" width="3" height="5" rx="1" fill="var(--accent)"/><rect x="10.5" y="9" width="3" height="10" rx="1" fill="var(--copilot)"/><rect x="16" y="5" width="3" height="14" rx="1" fill="var(--codex)"/></svg>
@@ -138,6 +150,8 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
   </div>
 </nav>
 
+<main id="main">
+
 <header class="hero">
   <div class="wrap">
     <span class="eyebrow"><b>New</b> Copilot lane, desktop dashboard, Windows client</span>
@@ -148,11 +162,11 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
       <a class="btn" href="https://github.com/patrickking67/ai-usage-widgets">View source</a>
     </div>
     <div class="vendors">
-      <span class="chip"><span class="dot" style="background:var(--accent)"></span>Claude Code</span>
-      <span class="chip"><span class="dot" style="background:var(--codex)"></span>Codex</span>
-      <span class="chip"><span class="dot" style="background:var(--copilot)"></span>GitHub Copilot</span>
-      <span class="chip"><span class="dot" style="background:var(--cursor)"></span>Cursor <span class="tag">BETA</span></span>
-      <span class="chip"><span class="dot" style="background:var(--grok)"></span>Grok <span class="tag">BETA</span></span>
+      <span class="chip"><span class="dot" aria-hidden="true" style="background:var(--accent)"></span>Claude Code</span>
+      <span class="chip"><span class="dot" aria-hidden="true" style="background:var(--codex)"></span>Codex</span>
+      <span class="chip"><span class="dot" aria-hidden="true" style="background:var(--copilot)"></span>GitHub Copilot</span>
+      <span class="chip"><span class="dot" aria-hidden="true" style="background:var(--cursor)"></span>Cursor <span class="tag">BETA</span></span>
+      <span class="chip"><span class="dot" aria-hidden="true" style="background:var(--grok)"></span>Grok <span class="tag">BETA</span></span>
     </div>
 
     <div class="show">
@@ -168,12 +182,12 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
     <h2>Not another percentage.</h2>
     <p class="sub">A number that says 60% means nothing without time. TokenMeter reads each window's length and reset, so it can tell you whether 60% is fine or a problem.</p>
     <div class="grid">
-      <div class="card"><div class="icon" style="background:var(--accent)">⏱</div><h3>Pace, not just percent</h3><p>A notch marks even pace on every bar. Past it, the bar turns amber, and a flame appears in the menu bar when you're on course to run out before the reset.</p></div>
-      <div class="card"><div class="icon" style="background:var(--codex)">▦</div><h3>Where the tokens went</h3><p>30 days of tokens per vendor from local logs, split into input, output and cache, plus which MCP servers, skills and subagents were running while your limit dropped.</p></div>
-      <div class="card"><div class="icon" style="background:var(--copilot)">◧</div><h3>Menu bar, desktop, widgets</h3><p>A glanceable popover, a full dashboard window, and WidgetKit widgets that stay readable on any wallpaper, even when macOS strips their colour.</p></div>
-      <div class="card"><div class="icon" style="background:var(--grok)">🔔</div><h3>Alerts that mean something</h3><p>One notification at 80% and one at 95% per window, plus an "all clear" when a window you were pushing against resets.</p></div>
-      <div class="card"><div class="icon" style="background:var(--cursor)">⌘</div><h3>Inside Claude Code</h3><p>A plugin with <code>/usage</code>, weekly reports and a limit-aware planning skill, so Claude sizes big tasks to the headroom you actually have.</p></div>
-      <div class="card"><div class="icon" style="background:#222">⊞</div><h3>macOS and Windows</h3><p>A native SwiftUI app on the Mac, and a tray app with a desktop widget on Windows. Both read and write the same documented board file.</p></div>
+      <div class="card"><div class="icon" aria-hidden="true" style="background:var(--accent)">◷</div><h3>Pace, not just percent</h3><p>A notch marks even pace on every bar. Past it, the bar turns amber, and a flame appears in the menu bar when you're on course to run out before the reset.</p></div>
+      <div class="card"><div class="icon" aria-hidden="true" style="background:var(--codex)">▦</div><h3>Where the tokens went</h3><p>30 days of tokens per vendor from local logs, split into input, output and cache, plus which MCP servers, skills and subagents were running while your limit dropped.</p></div>
+      <div class="card"><div class="icon" aria-hidden="true" style="background:var(--copilot)">◧</div><h3>Menu bar, desktop, widgets</h3><p>A glanceable popover, a full dashboard window, and WidgetKit widgets that stay readable on any wallpaper, even when macOS strips their colour.</p></div>
+      <div class="card"><div class="icon" aria-hidden="true" style="background:var(--grok)">◉</div><h3>Alerts that mean something</h3><p>One notification at 80% and one at 95% per window, plus an "all clear" when a window you were pushing against resets.</p></div>
+      <div class="card"><div class="icon" aria-hidden="true" style="background:var(--cursor)">⌘</div><h3>Inside Claude Code</h3><p>A plugin with <code>/usage</code>, weekly reports and a limit-aware planning skill, so Claude sizes big tasks to the headroom you actually have.</p></div>
+      <div class="card"><div class="icon" aria-hidden="true" style="background:#222">⊞</div><h3>macOS and Windows</h3><p>A native SwiftUI app on the Mac, and a tray app with a desktop widget on Windows. Both read and write the same documented board file.</p></div>
     </div>
   </div>
 </section>
@@ -189,7 +203,7 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
       <div class="meter">
         <div class="top"><span>Current</span><span id="pct">60%</span></div>
         <div class="bar"><i id="fill"></i><b id="notch"></b></div>
-        <div class="foot"><span id="left"></span><span id="proj"></span></div>
+        <div class="foot" aria-live="polite"><span id="left"></span><span id="proj"></span></div>
       </div>
       <label class="legend" for="elapsed">Time into the window</label>
       <input id="elapsed" type="range" min="10" max="98" value="30">
@@ -208,8 +222,8 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
         <tr><td>Claude Code</td><td>The status line feed, plus Anthropic's usage endpoint using Claude Code's own sign-in: 5-hour, weekly and per-model windows, and extra spend.</td><td>Transcripts in <code>~/.claude/projects</code>, deduplicated per message.</td></tr>
         <tr><td>Codex</td><td>The <code>rate_limits</code> Codex records after every turn.</td><td>Token counts in Codex session rollouts.</td></tr>
         <tr><td>GitHub Copilot</td><td>The premium-request allowance, requested through the <code>gh</code> CLI's sign-in. Seats without a cap show credits used.</td><td>VS Code agent-mode chat sessions.</td></tr>
-        <tr><td>Cursor<span class="tag">BETA</span></td><td>Cursor's monthly usage pool and on-demand spend, using Cursor's local sign-in.</td><td>—</td></tr>
-        <tr><td>Grok<span class="tag">BETA</span></td><td>The SuperGrok credit pool the <code>grok</code> CLI reports for <code>/usage</code>.</td><td>—</td></tr>
+        <tr><td>Cursor<span class="tag">BETA</span></td><td>Cursor's monthly usage pool and on-demand spend, using Cursor's local sign-in.</td><td>None</td></tr>
+        <tr><td>Grok<span class="tag">BETA</span></td><td>The SuperGrok credit pool the <code>grok</code> CLI reports for <code>/usage</code>.</td><td>None</td></tr>
         <tr><td>Microsoft 365 Copilot</td><td colspan="2">No lane. Microsoft exposes Copilot usage only to tenant admins, with no per-person limit to show.</td></tr>
       </tbody>
     </table>
@@ -223,12 +237,12 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
       <h2>Reads. Never writes.</h2>
       <p class="sub" style="margin-bottom:0">TokenMeter borrows sign-ins that are already on your machine, and only to read.</p>
       <div class="checks">
-        <div><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10.5l4 4 8-9"/></svg><span>Never refreshes, rotates or stores a vendor token, so it can't sign your tools out.</span></div>
-        <div><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10.5l4 4 8-9"/></svg><span>Claude's token is read with the same trusted <code>security</code> tool Claude Code uses, so there are no Keychain prompts.</span></div>
-        <div><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10.5l4 4 8-9"/></svg><span>Copilot requests go through <code>gh</code>, so the GitHub token never leaves it.</span></div>
-        <div><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10.5l4 4 8-9"/></svg><span>Activity comes from local logs on this machine. There's no server, account or telemetry.</span></div>
-        <div><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10.5l4 4 8-9"/></svg><span>Requests go only to the vendors' own endpoints, listed in the spec.</span></div>
-        <div><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10.5l4 4 8-9"/></svg><span>MIT licensed. Every source and field is documented in <code>spec/</code>.</span></div>
+        <div><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 10.5l4 4 8-9"/></svg><span>Never refreshes, rotates or stores a vendor token, so it can't sign your tools out.</span></div>
+        <div><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 10.5l4 4 8-9"/></svg><span>Claude's token is read with the same trusted <code>security</code> tool Claude Code uses, so there are no Keychain prompts.</span></div>
+        <div><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 10.5l4 4 8-9"/></svg><span>Copilot requests go through <code>gh</code>, so the GitHub token never leaves it.</span></div>
+        <div><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 10.5l4 4 8-9"/></svg><span>Activity comes from local logs on this machine. There's no server, account or telemetry.</span></div>
+        <div><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 10.5l4 4 8-9"/></svg><span>Requests go only to the vendors' own endpoints, listed in the spec.</span></div>
+        <div><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 10.5l4 4 8-9"/></svg><span>MIT licensed. Every source and field is documented in <code>spec/</code>.</span></div>
       </div>
     </div>
   </div>
@@ -244,7 +258,7 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
         <p>Menu bar app, dashboard window and two desktop widgets. Build it from source with Xcode:</p>
 <pre>brew install xcodegen
 git clone https://github.com/patrickking67/ai-usage-widgets
-cd tokenmeter/apps/macos
+cd ai-usage-widgets/apps/macos
 xcodegen generate && open TokenMeter.xcodeproj</pre>
         <img src="img/shot-widget.png" alt="TokenMeter activity widgets on the macOS desktop" loading="lazy">
       </div>
@@ -252,7 +266,7 @@ xcodegen generate && open TokenMeter.xcodeproj</pre>
         <h3>Windows 10 / 11</h3>
         <p>A tray icon, a desktop widget, and the same Settings and alerts. PowerShell 7 and WPF, with nothing extra to install:</p>
 <pre>git clone https://github.com/patrickking67/ai-usage-widgets
-cd tokenmeter\apps\windows
+cd ai-usage-widgets\apps\windows
 .\install.ps1</pre>
         <ul><li>Starts at sign-in and writes <code>%LOCALAPPDATA%\TokenMeter\board.json</code></li><li>Reads Claude Code, Codex and Copilot the same way the Mac app does</li></ul>
       </div>
@@ -276,6 +290,8 @@ cd tokenmeter\apps\windows
     <details><summary>Can I add another tool?</summary><p>Each lane is one small source that produces a <code>ProviderUsage</code>. The board format is documented in <code>spec/board.md</code>, and every client skips vendors it doesn't know yet.</p></details>
   </div>
 </section>
+
+</main>
 
 <footer>
   <div class="wrap">

@@ -57,6 +57,38 @@ struct Meter: Codable, Hashable, Identifiable {
         return hit < r ? hit : nil
     }
 
+    /// What VoiceOver reads after the label: "38 percent used, resets in
+    /// 4 hours 13 minutes, on pace for 64 percent".
+    func spokenSummary(at now: Date) -> String {
+        var parts = ["\(Int((fraction(at: now) * 100).rounded())) percent used"]
+        if let r = resetDate, r > now {
+            if windowSeconds <= 18_000 || r.timeIntervalSince(now) < 86_400 {
+                parts.append("resets in \(Self.spokenDuration(r.timeIntervalSince(now)))")
+            } else {
+                let f = DateFormatter(); f.dateFormat = "EEEE"
+                parts.append("resets \(f.string(from: r))")
+            }
+        } else if resetDate != nil {
+            parts.append("fresh window")
+        }
+        if let hit = limitDate(at: now) {
+            parts.append("at this rate the limit is reached in \(Self.spokenDuration(hit.timeIntervalSince(now)))")
+        } else if let p = projectedAtReset(at: now) {
+            parts.append("on pace for \(Int(p.rounded())) percent")
+        }
+        return parts.joined(separator: ", ")
+    }
+
+    /// "3 days 4 hours", "2 hours 13 minutes", "41 minutes", "less than a minute".
+    static func spokenDuration(_ seconds: TimeInterval) -> String {
+        let s = Int(max(seconds, 0))
+        func unit(_ n: Int, _ name: String) -> String { "\(n) \(name)\(n == 1 ? "" : "s")" }
+        let d = s / 86_400, h = (s % 86_400) / 3600, m = (s % 3600) / 60
+        if d > 0 { return h > 0 ? "\(unit(d, "day")) \(unit(h, "hour"))" : unit(d, "day") }
+        if h > 0 { return m > 0 ? "\(unit(h, "hour")) \(unit(m, "minute"))" : unit(h, "hour") }
+        return m > 0 ? unit(m, "minute") : "less than a minute"
+    }
+
     func resetText(at now: Date) -> String {
         guard let r = resetDate, r > now else { return "Fresh Window" }
         if windowSeconds <= 18_000 || r.timeIntervalSince(now) < 86_400 {
@@ -140,6 +172,12 @@ struct ProviderUsage: Codable, Hashable, Identifiable {
     func isStale(at now: Date) -> Bool {
         guard let u = updated else { return true }
         return now.timeIntervalSince(u) > 6 * 3600
+    }
+
+    /// One lane for VoiceOver: "Claude, 37 percent used" from its hottest window.
+    func spokenHottest(at now: Date) -> String {
+        guard let m = hottest(at: now) else { return "\(vendor.displayName), no limits reported" }
+        return "\(vendor.displayName), \(Int((m.fraction(at: now) * 100).rounded())) percent used"
     }
 
     /// The meter closest to its limit — what the menu bar shows.

@@ -8,43 +8,26 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  macos:
-    name: macOS app
+  check:
+    name: scripts/check.sh
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
-      - name: Install XcodeGen
-        run: brew install xcodegen
-      - name: Build (unsigned)
-        working-directory: apps/macos
-        run: |
-          xcodegen generate
-          xcodebuild -project TokenMeter.xcodeproj -scheme TokenMeter -configuration Release \
-            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build | tail -n 20
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: brew install xcodegen shellcheck actionlint
+      - name: Check
+        run: scripts/check.sh
 
   windows:
-    name: Windows core
+    name: Windows core tests
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Pester tests
+      - uses: actions/checkout@v5
+      - name: Core tests on Windows
         shell: pwsh
-        run: |
-          Install-Module Pester -MinimumVersion 5.5 -Force -Scope CurrentUser
-          Invoke-Pester -Path apps/windows/tests -CI
-
-  plugin:
-    name: Claude Code plugin
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: board.py against the spec fixtures
-        run: python -m unittest discover -s plugin/tests -v
-      - name: Manifests are valid JSON
-        run: |
-          python -m json.tool plugin/.claude-plugin/plugin.json > /dev/null
-          python -m json.tool .claude-plugin/marketplace.json > /dev/null
+        run: pwsh -NoProfile -File apps/windows/tests/Core.Tests.ps1

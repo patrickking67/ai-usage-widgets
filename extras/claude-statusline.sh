@@ -47,7 +47,7 @@ eval "$(printf '%s' "$input" | jq -r '
   @sh "D7=\(.rate_limits.seven_day.used_percentage // "" )",
   @sh "D7_AT=\(.rate_limits.seven_day.resets_at // "" )"
 ' 2>/dev/null)"
-: "${MODEL:=?}" "${PCT:=0}" "${COST:=0}" "${DUR:=0}" "${SID:=none}" "${ADDED:=0}" "${REMOVED:=0}"
+: "${MODEL:=?}" "${PCT:=0}" "${COST:=0}" "${DUR:=0}" "${SID:=none}" "${ADDED:=0}" "${REMOVED:=0}" "${FAST:=false}" "${THINK:=false}"
 NOW=$(date +%s)
 
 # ── helpers ──────────────────────────────────────────────────────────
