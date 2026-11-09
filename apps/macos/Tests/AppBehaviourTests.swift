@@ -46,3 +46,66 @@ final class CopilotLookupTests: XCTestCase {
         XCTAssertTrue(c.contains("/Users/someone/.local/bin/gh"))
     }
 }
+
+final class ActivityTrendTests: XCTestCase {
+    private func activity(_ claude: [Double], codex: [Double]? = nil) -> Activity {
+        let days = claude.enumerated().map { i, c in
+            DayUsage(day: Double(i) * 86_400, claude: c, codex: codex?[i] ?? 0)
+        }
+        return Activity(generatedAt: 0, days: days, models: [], claude24h: .init(), codex24h: .init(),
+                        drivers: [], subagentShare: nil, longContextShare: nil)
+    }
+
+    func testWeekOverWeek() throws {
+        let a = activity(Array(repeating: 10, count: 7) + Array(repeating: 15, count: 7))
+        XCTAssertEqual(try XCTUnwrap(a.weekOverWeek), 0.5, accuracy: 1e-9)
+        XCTAssertNil(activity(Array(repeating: 10, count: 13)).weekOverWeek, "needs two full weeks")
+        XCTAssertNil(activity(Array(repeating: 0, count: 7) + Array(repeating: 5, count: 7)).weekOverWeek,
+                     "no change from nothing")
+    }
+
+    func testVendorSharesOverTheSpanOnly() {
+        let a = activity([100, 0, 30], codex: [0, 0, 10])
+        let two = a.vendorShares(span: 2)
+        XCTAssertEqual(two.map(\.vendor), [.claude, .codex])
+        XCTAssertEqual(two.map(\.share), [0.75, 0.25])
+        XCTAssertTrue(activity([0, 0]).vendorShares(span: 2).isEmpty)
+    }
+}
+
+final class ProjectAndHeatTests: XCTestCase {
+    private let home = "/Users/someone"
+
+    func testProjectNames() {
+        XCTAssertEqual(ProjectShare.name(cwd: "/Users/someone/GitHub/app", home: home), "app")
+        XCTAssertEqual(ProjectShare.name(cwd: "/Users/someone/GitHub/app/", home: home), "app")
+        XCTAssertEqual(ProjectShare.name(cwd: "/Users/someone/GitHub/app/.claude/worktrees/fix-x", home: home), "app",
+                       "a worktree counts toward its repository")
+        XCTAssertEqual(ProjectShare.name(cwd: "/Users/someone/GitHub/app/.worktrees/feat-y/src", home: home), "app")
+        XCTAssertEqual(ProjectShare.name(cwd: "/Users/someone", home: home), "Home")
+        XCTAssertEqual(ProjectShare.name(cwd: "/private/tmp/x", home: home), "Scratch")
+        XCTAssertEqual(ProjectShare.name(
+            cwd: "/Users/someone/Library/Application Support/Claude/scratch-workspaces/a/b", home: home), "Scratch")
+    }
+
+    func testPeakIsTheBusiestCell() throws {
+        var heat = Array(repeating: Array(repeating: 0.0, count: 24), count: 7)
+        heat[1][14] = 900; heat[4][9] = 300
+        let a = Activity(generatedAt: 0, days: [], models: [], claude24h: .init(), codex24h: .init(), drivers: [],
+                         subagentShare: nil, longContextShare: nil, heat: heat)
+        let p = try XCTUnwrap(a.peak)
+        XCTAssertEqual(p.weekday, 1); XCTAssertEqual(p.hour, 14)
+        XCTAssertNil(Activity(generatedAt: 0, days: [], models: [], claude24h: .init(), codex24h: .init(), drivers: [],
+                              subagentShare: nil, longContextShare: nil).peak)
+    }
+}
+
+final class CodexWorkspaceTests: XCTestCase {
+    func testWorkspaceNameForTheSelectedAccountOnly() throws {
+        let o = try Fixture.json("codex-accounts.json")
+        XCTAssertEqual(CodexSource.workspaceName(o, accountID: "acct-workspace-0002"), "Example Workspace")
+        XCTAssertNil(CodexSource.workspaceName(o, accountID: "acct-personal-0001"), "personal accounts have no workspace name")
+        XCTAssertNil(CodexSource.workspaceName(o, accountID: nil))
+        XCTAssertEqual(CodexSource.planName("self_serve_business_prolite"), "Business")
+    }
+}

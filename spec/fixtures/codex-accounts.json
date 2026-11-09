@@ -1,0 +1,11 @@
+{
+  "accounts": {
+    "acct-personal-0001": {
+      "account": { "name": null, "plan_type": "plus", "structure": "personal" }
+    },
+    "acct-workspace-0002": {
+      "account": { "name": "Example Workspace", "plan_type": "self_serve_business_prolite", "structure": "workspace" }
+    }
+  },
+  "account_ordering": ["acct-workspace-0002", "acct-personal-0001"]
+}

@@ -315,7 +315,7 @@ struct MeterRow: View {
                         .foregroundStyle(meter.tint(at: now))
                         .widgetAccentable()
                 }
-                Text("\(Int((f * 100).rounded()))%")
+                Text(meter.atLimit(at: now) ? "Limit" : "\(Int((f * 100).rounded()))%")
                     .font(.system(size: compact ? 11 : 13, weight: .semibold, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(stale ? .secondary : .primary)
@@ -326,9 +326,13 @@ struct MeterRow: View {
                 .opacity(stale ? 0.55 : 1)
             if !compact {
                 HStack(spacing: 6) {
-                    ResetLabel(meter: meter, now: now)
+                    if meter.atLimit(at: now), let back = meter.backText(at: now) {
+                        Text(back.prefix(1).uppercased() + back.dropFirst())
+                    } else {
+                        ResetLabel(meter: meter, now: now)
+                    }
                     Spacer(minLength: 4)
-                    if !stale { PaceNote(meter: meter, now: now) }
+                    if !stale, !meter.atLimit(at: now) { PaceNote(meter: meter, now: now) }
                 }
                 .font(.system(size: 10)).foregroundStyle(.tertiary).monospacedDigit().lineLimit(1)
             }

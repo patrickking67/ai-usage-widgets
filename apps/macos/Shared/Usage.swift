@@ -124,15 +124,15 @@ enum Vendor: String, Codable, Hashable, CaseIterable {
     }
     /// Full-colour app icon, where one is bundled (widget, popover).
     var appIcon: String? {
-        switch self { case .claude: "ClaudeApp"; case .codex: "CodexApp"; default: nil }
+        switch self { case .claude: "ClaudeApp"; case .codex: "CodexApp"; case .copilot: "CopilotApp"; default: nil }
     }
     /// Template glyph cut from the app icon, for widgets drawn without colour.
     var glyph: String? {
-        switch self { case .claude: "ClaudeGlyph"; case .codex: "CodexGlyph"; default: nil }
+        switch self { case .claude: "ClaudeGlyph"; case .codex: "CodexGlyph"; case .copilot: "CopilotGlyph"; default: nil }
     }
     /// Monochrome template mark (menu bar).
     var mark: String? {
-        switch self { case .claude: "ClaudeMark"; case .codex: "OpenAIMark"; default: nil }
+        switch self { case .claude: "ClaudeMark"; case .codex: "OpenAIMark"; case .copilot: "CopilotMark"; default: nil }
     }
     /// Stand-in for vendors without bundled artwork: an SF Symbol on a tinted tile.
     var symbol: String {

@@ -106,13 +106,13 @@ final class ClaudeSource: ProviderSource {
         return "Free"
     }
 
-    /// Every 90 seconds (the call takes about 0.3s); the profile hourly; half
+    /// Every 60 seconds (the call takes about 0.3s); the profile hourly; half
     /// an hour after a 429; hourly while Claude Code's own login is expired
     /// (it renews itself on its next run).
     private func refreshLive() {
         guard interactive, liveEnabled, !inFlight, Date() >= nextAttempt else { return }
         inFlight = true
-        nextAttempt = Date().addingTimeInterval(90)
+        nextAttempt = Date().addingTimeInterval(60)
         let wantsProfile = Date() >= nextProfile
         Task { @MainActor in
             defer { inFlight = false }

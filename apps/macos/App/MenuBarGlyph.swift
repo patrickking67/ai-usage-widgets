@@ -1,10 +1,14 @@
 import AppKit
 
 /// The menu bar logo: one ring per lane (two at most, outer first), each
-/// filled to that lane's hottest window, and a dot in the middle while Keep
-/// Awake is holding. A template image, so it takes the menu bar's own colour.
+/// filled to that lane's hottest window. While Keep Awake is on, a small cup
+/// sits in the lower right corner, cut out of the rings: outlined while it is
+/// waiting for an agent, filled while it is holding the Mac awake. A template
+/// image, so it takes the menu bar's own colour.
 enum MenuBarGlyph {
-    static func image(fractions: [Double], awake: Bool) -> NSImage {
+    enum Awake { case off, armed, holding }
+
+    static func image(fractions: [Double], awake: Awake) -> NSImage {
         let lanes = Array(fractions.prefix(2))
         let img = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { rect in
             let c = CGPoint(x: rect.midX, y: rect.midY)
@@ -25,9 +29,17 @@ enum MenuBarGlyph {
                 NSColor.black.setStroke()
                 arc.stroke()
             }
-            if awake {
-                NSColor.black.setFill()
-                NSBezierPath(ovalIn: CGRect(x: c.x - 1.6, y: c.y - 1.6, width: 3.2, height: 3.2)).fill()
+            guard awake != .off, let ctx = NSGraphicsContext.current else { return true }
+            let badge = CGRect(x: rect.maxX - 9, y: rect.minY, width: 9, height: 9)
+            // Knock a hole in the rings so the cup reads at 18 points.
+            ctx.compositingOperation = .clear
+            NSBezierPath(ovalIn: badge.insetBy(dx: -1.2, dy: -1.2)).fill()
+            ctx.compositingOperation = .sourceOver
+            let name = awake == .holding ? "cup.and.saucer.fill" : "cup.and.saucer"
+            if let cup = NSImage(systemSymbolName: name, accessibilityDescription: nil)?
+                .withSymbolConfiguration(.init(pointSize: 7.5, weight: .bold)) {
+                let s = cup.size
+                cup.draw(in: CGRect(x: badge.midX - s.width / 2, y: badge.midY - s.height / 2, width: s.width, height: s.height))
             }
             return true
         }

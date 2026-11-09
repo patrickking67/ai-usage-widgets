@@ -203,7 +203,8 @@ struct MenuBarLabel: View {
         Group {
             if style == MenuBarPrefs.logo {
                 Image(nsImage: MenuBarGlyph.image(
-                    fractions: lanes.map { $0.hottest(at: now)?.fraction(at: now) ?? 0 }, awake: awake.holding))
+                    fractions: lanes.map { $0.hottest(at: now)?.fraction(at: now) ?? 0 },
+                    awake: awake.holding ? .holding : awake.mode == .off ? .off : .armed))
             } else {
                 percentages
             }
@@ -235,7 +236,7 @@ struct MenuBarLabel: View {
             } else {
                 VendorMark(vendor: .claude)
             }
-            if awake.holding { Image(systemName: "cup.and.saucer.fill") }
+            if awake.mode != .off { Image(systemName: awake.holding ? "cup.and.saucer.fill" : "cup.and.saucer") }
         }
     }
 }
@@ -320,12 +321,17 @@ struct PopoverView: View {
     private var footer: some View {
         VStack(alignment: .leading, spacing: 10) {
             Divider()
+            if let line = summary {
+                Text(line).font(.system(size: 10)).foregroundStyle(.secondary).monospacedDigit().lineLimit(1)
+            }
             HStack(spacing: 14) {
                 Button {
                     openWindow(id: "dashboard")
                     NSApp.activate()
                 } label: { Label("Dashboard", systemImage: "chart.bar.xaxis") }
+                    .keyboardShortcut("d")
                 SettingsLink { Label("Settings", systemImage: "gearshape") }
+                    .keyboardShortcut(",")
                     .simultaneousGesture(TapGesture().onEnded { NSApp.activate() })
                 Spacer()
                 Button("Quit") { NSApp.terminate(nil) }
@@ -333,6 +339,23 @@ struct PopoverView: View {
             }
             .buttonStyle(.borderless).font(.system(size: 11))
         }
+    }
+}
+
+extension PopoverView {
+    /// "Today 1.2B tokens · 9.4B this week, up 12% · updated 20s ago".
+    var summary: String? {
+        guard let board else { return nil }
+        var parts: [String] = []
+        if let a = board.activity, let today = a.days.last {
+            parts.append("Today \(today.total.compactTokens)")
+            var week = "\(a.weekTotal.compactTokens) this week"
+            if let w = a.weekOverWeek, abs(w) >= 0.01 { week += ", \(w > 0 ? "up" : "down") \(Int((abs(w) * 100).rounded()))%" }
+            parts.append(week)
+        }
+        let ago = Date(timeIntervalSince1970: board.generatedAt).ago(from: now)
+        parts.append(ago == "Live" ? "updated just now" : "updated \(ago)")
+        return parts.joined(separator: " · ")
     }
 }
 

@@ -7,6 +7,15 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- **App icon**: the two rings from the menu bar on a dark tile, with gradient arcs, drawn by `apps/macos/App/IconArt.swift` (`scripts/make-icon.sh` writes the icon set).
+- **Shortcuts, Spotlight and Siri**: Get AI Usage, Set Keep Awake and Open TokenMeter Dashboard, with suggested phrases.
+- **Dashboard analytics**: the tokens card shows the change on last week, a By tool card splits the span across Claude, Codex and Copilot, a Projects card ranks the week's repositories (worktrees count toward their repo), and a When you work heatmap shows tokens by weekday and hour with the busiest slot. The activity cache is rebuilt once to pick up each session's folder.
+- **Codex workspace name** on the card ("Acme · Business"), from `chatgpt.com/backend-api/accounts/check` hourly. The token doesn't carry it.
+- **Copilot's own logo** for its card, widgets and menu bar mark, in place of the generic code symbol.
+- **Live Dock icon**: with Show in Dock on, the icon's rings fill to each lane's hottest window. A setting turns it off.
+- **Keep Awake in the menu bar**: a small cup cut into the ring logo, outlined while waiting for an agent and filled while holding the Mac awake.
+- **Popover footer** with today's tokens, this week's and its change, and when the board was last written. Command-D opens the dashboard and Command-comma Settings.
+- **Settings**: a Keep Awake section, each notification kind on its own switch, and an About pane.
 - **Ring logo in the menu bar.** One ring per lane (two at most), filled to its hottest window, replaces the vendor marks and percentages, which stay available in Settings, General, Menu bar.
 - **Keep Awake.** A cup in the popover header holds a power assertion while Claude Code or Codex is writing a session (last 5 minutes), for one hour, or until turned off. An option keeps the screen on too. The menu bar ring shows a dot while it holds.
 - **Notifications** for a window on pace to run out before its reset (from 40%), for a window used up (with when it comes back), and when a one-hour Keep Awake ends. Clicking any notification opens the dashboard, and they show while the app is in front.
@@ -23,7 +32,7 @@ All notable changes to this project are documented here. The format follows
 ### Fixed
 - TokenMeter didn't come back after a restart. It registered as a login item only when the status read exactly `notRegistered`. It now registers once on first launch, checks the result, and falls back to a per-user LaunchAgent that also restarts it after a crash. A second copy started alongside quits.
 - The Copilot lane stayed hidden when `gh` was installed outside Homebrew or `/usr` (pixi, Nix, `~/.local/bin`).
-- Rings: a window that's used up reads "Limit" and when it comes back instead of 100%, a lane at 0% no longer draws a dot, and each ring has the pace tick the bars have.
+- Bars and rings: a window that's used up reads "Limit" and when it comes back instead of 100%, without a pace note, a lane at 0% no longer draws a dot, and each ring has the pace tick the bars have.
 - Cursor: a usage summary with a billing cycle end but no start crashed the app. Either end missing now falls back to a 30-day window.
 - The static page's install steps changed into a `tokenmeter` folder that a clone does not create. It also gains a main landmark, skip link, visible focus, reduced-motion support and AA contrast for muted text.
 - The Windows core tests ran under Invoke-Pester, which counted 0 tests because the file has no Describe blocks. CI now runs the script directly so its failure count is the exit code.
@@ -35,7 +44,7 @@ All notable changes to this project are documented here. The format follows
 ### Changed
 - CI is one macOS job running `scripts/check.sh` plus a Windows job for the core tests, on `actions/checkout@v5`.
 - The README no longer links a GitHub Pages site; there isn't one. `docs/` is a static page to preview locally.
-- Limits refresh every 90 seconds and whenever the popover opens (at most every 20 seconds per vendor).
+- Limits refresh every 60 seconds and whenever the popover opens (at most every 20 seconds per vendor).
 - The Claude lane is named "Claude": its limits cover the whole account, not just Claude Code.
 - Clicking any widget opens the dashboard.
 - Widgets are named Rings, Limits and Activity, and their descriptions cover every lane.

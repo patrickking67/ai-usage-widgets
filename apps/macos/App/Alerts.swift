@@ -25,6 +25,21 @@ final class Alerts: NSObject, UNUserNotificationCenterDelegate {
 
     var isEnabled: Bool { defaults.object(forKey: Self.enabledKey) as? Bool ?? true }
 
+    /// Each kind can be switched off on its own in Settings.
+    enum Kind: String, CaseIterable {
+        case pace, thresholds, limit, reset
+        var key: String { "alerts.\(rawValue)" }
+        var title: String {
+            switch self {
+            case .pace:       "Running hot: on pace to run out before the reset"
+            case .thresholds: "At 80% and 95%"
+            case .limit:      "Used up, with when it comes back"
+            case .reset:      "A hot window resets"
+            }
+        }
+    }
+    func wants(_ k: Kind) -> Bool { defaults.object(forKey: k.key) as? Bool ?? true }
+
     func requestPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
@@ -42,8 +57,10 @@ final class Alerts: NSObject, UNUserNotificationCenterDelegate {
                 // Checked even for stale providers — the reset time is known,
                 // so Codex at 99% four days ago still gets its all-clear.
                 if let r = watching[slot], r <= now.timeIntervalSince1970 {
-                    post("\(p.vendor.displayName) \(m.label.lowercased()) limit reset",
-                         "You're clear to use \(p.vendor.displayName) again.")
+                    if wants(.reset) {
+                        post("\(p.vendor.displayName) \(m.label.lowercased()) limit reset",
+                             "You're clear to use \(p.vendor.displayName) again.")
+                    }
                     watching[slot] = nil
                 }
 
@@ -57,11 +74,13 @@ final class Alerts: NSObject, UNUserNotificationCenterDelegate {
                     // Crossing a higher mark marks the lower ones too, so a jump never double-posts.
                     [80, 95, 100, -1].filter { $0 <= threshold }.forEach { fired.insert("\(slot)|\(Int(r))|\($0)") }
                     if threshold == 100 {
+                        guard wants(.limit) else { break }
                         let back = Date(timeIntervalSince1970: r)
                         post("\(p.vendor.displayName) \(m.label.lowercased()) limit reached",
                              "It comes back \(back.formatted(.dateTime.weekday(.wide).hour().minute())).")
                         break
                     }
+                    guard wants(.thresholds) else { break }
                     let body = m.limitDate(at: now).map { "At this pace you'll hit the limit \(Self.relative($0, now)). \(m.resetText(at: now))." }
                         ?? "\(m.resetText(at: now))."
                     post("\(p.vendor.displayName) \(m.label.lowercased()) at \(Int(used.rounded()))%", body)
@@ -71,7 +90,7 @@ final class Alerts: NSObject, UNUserNotificationCenterDelegate {
                 // Running hot well before 80%: on course to run out before the
                 // reset. Once per window; -1 is the pace slot.
                 let paceKey = "\(slot)|\(Int(r))|-1"
-                if used >= 40, used < 80, !fired.contains(paceKey), let hit = m.limitDate(at: now) {
+                if used >= 40, used < 80, wants(.pace), !fired.contains(paceKey), let hit = m.limitDate(at: now) {
                     fired.insert(paceKey)
                     post("\(p.vendor.displayName) \(m.label.lowercased()) is running hot",
                          "\(Int(used.rounded()))% used. At this pace you'll hit the limit \(Self.relative(hit, now)), before it resets.")
