@@ -27,16 +27,18 @@ final class ActivityScanner {
         var lastTotal: Double = 0             // Codex: cumulative, to skip repeated events
         var tallies: [String: [String: Tally]] = [:]  // hour -> model -> tally
         var tools: [String: [String: Int]] = [:]      // hour -> "kind|name" -> calls
+        var project: String?                          // from the session's working folder
     }
 
+    // Version 2 adds each file's project; older caches are rebuilt once.
     private struct Cache: Codable {
-        var version = 1
+        var version = 2
         var files: [String: FileState] = [:]
     }
 
     private lazy var cache: Cache = {
         guard let d = try? Data(contentsOf: cacheURL),
-              let c = try? JSONDecoder().decode(Cache.self, from: d), c.version == 1 else { return Cache() }
+              let c = try? JSONDecoder().decode(Cache.self, from: d), c.version == 2 else { return Cache() }
         return c
     }()
 
@@ -134,6 +136,7 @@ final class ActivityScanner {
               let o = try? JSONSerialization.jsonObject(with: line) as? [String: Any],
               let msg = o["message"] as? [String: Any],
               let hour = hourKey(o["timestamp"]) else { return }
+        if let cwd = o["cwd"] as? String { s.project = ProjectShare.name(cwd: cwd, home: home.path) }
 
         // Tools: every line carries different content blocks, so count them all.
         for block in msg["content"] as? [[String: Any]] ?? [] where block["type"] as? String == "tool_use" {
@@ -191,6 +194,7 @@ final class ActivityScanner {
 
         if o["type"] as? String == "turn_context" {
             s.model = p["model"] as? String ?? s.model
+            if let cwd = p["cwd"] as? String { s.project = ProjectShare.name(cwd: cwd, home: home.path) }
             return
         }
         guard p["type"] as? String == "token_count",
@@ -244,6 +248,12 @@ final class ActivityScanner {
         if let old = cache.files[key], old.offset == size { return }   // unchanged
         var state = FileState()
         state.offset = size
+        // workspaceStorage/<hash>/workspace.json names the folder the window had open.
+        let ws = url.deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("workspace.json")
+        if let d = try? Data(contentsOf: ws), let o = try? JSONSerialization.jsonObject(with: d) as? [String: Any],
+           let folder = (o["folder"] as? String).flatMap(URL.init(string:)), folder.isFileURL {
+            state.project = ProjectShare.name(cwd: folder.path, home: home.path)
+        }
         autoreleasepool {
             guard let data = try? Data(contentsOf: url) else { return }
             var requests: [String: [String: Any]] = [:]
@@ -292,14 +302,24 @@ final class ActivityScanner {
         var sub24 = 0.0, long24 = 0.0
         var calls: [String: Int] = [:]
         var driverTokens: [String: Double] = [:]
+        var perProject: [String: [Vendor: Double]] = [:]
+        var heat = Array(repeating: Array(repeating: 0.0, count: 24), count: 7)
 
         for (key, f) in cache.files {
             let vendor: Vendor = key.hasPrefix("c:") ? .claude : key.hasPrefix("v:") ? .copilot : .codex
             for (h, models) in f.tallies {
                 guard let hour = TimeInterval(h), hour >= monthStart else { continue }
                 let day = cal.startOfDay(for: Date(timeIntervalSince1970: hour)).timeIntervalSince1970
+                let when = Date(timeIntervalSince1970: hour)
+                // Monday first: Calendar's weekday is 1 for Sunday.
+                let weekday = (cal.component(.weekday, from: when) + 5) % 7
+                let hourOfDay = cal.component(.hour, from: when)
                 for (model, tally) in models {
                     perDay[day, default: [:]][vendor, default: 0] += tally.t.total
+                    heat[weekday][hourOfDay] += tally.t.total
+                    if hour >= weekStart {
+                        perProject[f.project ?? "Other", default: [:]][vendor, default: 0] += tally.t.total
+                    }
                     if hour >= weekStart {
                         let mk = "\(vendor.rawValue)|\(model)"
                         perModel[mk] = (vendor, model, (perModel[mk]?.2 ?? 0) + tally.t.total)
@@ -347,7 +367,13 @@ final class ActivityScanner {
             drivers: Array(drivers.prefix(12)),
             subagentShare: claude24.total > 0 ? sub24 / claude24.total : nil,
             longContextShare: claude24.total > 0 ? long24 / claude24.total : nil,
-            copilot24h: last24[.copilot].flatMap { $0.total > 0 ? $0 : nil })
+            copilot24h: last24[.copilot].flatMap { $0.total > 0 ? $0 : nil },
+            projects: perProject.compactMap { name, v -> ProjectShare? in
+                let total = v.values.reduce(0, +)
+                guard total > 0, let top = v.max(by: { $0.value < $1.value })?.key else { return nil }
+                return ProjectShare(name: name, tokens: total, vendor: top)
+            }.sorted { $0.tokens > $1.tokens }.prefix(12).map { $0 },
+            heat: heat.joined().contains { $0 > 0 } ? heat : nil)
     }
 
     // MARK: helpers

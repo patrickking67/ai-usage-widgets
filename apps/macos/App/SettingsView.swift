@@ -13,6 +13,8 @@ struct SettingsView: View {
                 .tabItem { Label("Lanes", systemImage: "square.stack.3d.up") }
             AdvancedPane(collector: collector)
                 .tabItem { Label("Advanced", systemImage: "wrench.and.screwdriver") }
+            AboutPane()
+                .tabItem { Label("About", systemImage: "info.circle") }
         }
         .frame(width: 520)
         .fixedSize(horizontal: false, vertical: true)
@@ -25,6 +27,8 @@ private struct GeneralPane: View {
     @State private var loginError: String?
     @AppStorage(Alerts.enabledKey) private var alerts = true
     @AppStorage(DockPolicy.key) private var showInDock = false
+    @AppStorage(DockIcon.liveKey) private var liveDock = true
+    @ObservedObject private var awake = KeepAwake.shared
 
     var body: some View {
         Form {
@@ -36,12 +40,32 @@ private struct GeneralPane: View {
                 }
                 Toggle("Show in Dock", isOn: $showInDock)
                     .onChange(of: showInDock) { _, _ in DockPolicy.apply() }
+                Toggle("Show usage in the Dock icon", isOn: $liveDock)
+                    .onChange(of: liveDock) { _, _ in DockIcon.reset(); DockIcon.update(UsageStore.loadBoard()) }
+                    .padding(.leading, 12)
             } footer: {
                 Text("TokenMeter lives in the menu bar. With the Dock icon on, the dashboard also shows up in ⌘-Tab.")
             }
-            Section("Alerts") {
-                Toggle("Notify at 80% and 95%, and when a hot window resets", isOn: $alerts)
+            Section {
+                Picker("Keep the Mac awake", selection: Binding(get: { awake.mode }, set: { awake.set($0) })) {
+                    ForEach(AwakeMode.allCases) { Text($0.title).tag($0) }
+                }
+                Toggle("Keep the screen on too", isOn: $awake.screenOn)
+            } header: {
+                Text("Keep Awake")
+            } footer: {
+                Text("While agents work means Claude Code or Codex wrote a session in the last five minutes. The cup in the popover does the same.")
+            }
+            Section("Notifications") {
+                Toggle("Notify me", isOn: $alerts)
                     .onChange(of: alerts) { _, on in if on { Alerts.shared.requestPermission() } }
+                ForEach(Alerts.Kind.allCases, id: \.self) { k in
+                    Toggle(k.title, isOn: Binding(
+                        get: { UserDefaults.standard.object(forKey: k.key) as? Bool ?? true },
+                        set: { UserDefaults.standard.set($0, forKey: k.key) }))
+                        .disabled(!alerts)
+                        .padding(.leading, 12)
+                }
             }
             Section("Menu bar") {
                 Picker("Show", selection: Binding(
@@ -128,7 +152,7 @@ private struct LaneSection: View {
     private var sourceNote: String {
         switch vendor {
         case .claude:  "Status line feed plus Anthropic's usage endpoint, using Claude Code's own sign-in (read only)."
-        case .codex:   "Rate limits Codex records in ~/.codex/sessions after each turn."
+        case .codex:   "The usage endpoint Codex's own /status reads, using Codex's sign-in (read only), with the rate limits in ~/.codex/sessions as the fallback."
         case .copilot: "GitHub's Copilot quota endpoint, via the gh CLI's sign-in. VS Code agent sessions feed Activity."
         case .cursor:  "Cursor's usage endpoint, via Cursor's local sign-in."
         case .grok:    "xAI usage, where available."
@@ -168,6 +192,36 @@ enum DockPolicy {
     @MainActor static func apply() {
         let wanted = UserDefaults.standard.bool(forKey: key) || dashboardOpen
         NSApp.setActivationPolicy(wanted ? .regular : .accessory)
-        if wanted { NSApp.activate() }
+        if wanted {
+            NSApp.activate()
+            DockIcon.reset()
+            DockIcon.update(UsageStore.loadBoard())
+        }
+    }
+}
+
+private struct AboutPane: View {
+    private var version: String {
+        let v = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        let b = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
+        return "Version \(v) (\(b))"
+    }
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 72, height: 72)
+            Text("TokenMeter").font(.title2.weight(.semibold))
+            Text(version).foregroundStyle(.secondary).textSelection(.enabled)
+            Text("Plan limits for Claude, Codex, Copilot, Cursor and Grok. Reads your tools' own sign-ins, writes nothing back, and sends nothing anywhere else.")
+                .multilineTextAlignment(.center).foregroundStyle(.secondary).frame(maxWidth: 380)
+            HStack(spacing: 14) {
+                Link("Source on GitHub", destination: URL(string: "https://github.com/patrickking67/ai-usage-widgets")!)
+                Button("Show board file") { NSWorkspace.shared.activateFileViewerSelecting([UsageStore.boardURL]) }
+                    .buttonStyle(.link)
+            }
+            .padding(.top, 4)
+        }
+        .padding(28)
+        .frame(maxWidth: .infinity)
     }
 }

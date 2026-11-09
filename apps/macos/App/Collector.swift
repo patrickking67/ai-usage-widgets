@@ -86,7 +86,7 @@ final class Collector: ObservableObject {
         // Compare without the timestamp so an unchanged board is not rewritten.
         let changed = next.providers != board?.providers || next.activity != board?.activity
         board = next
-        if interactive { Alerts.shared.evaluate(next) }
+        if interactive { Alerts.shared.evaluate(next); DockIcon.update(next, now: now) }
         // Rewritten unchanged every five minutes too, so readers can tell a
         // quiet board from an app that has stopped (UsageBoard.isStale).
         let heartbeat = now.timeIntervalSince(lastWrite) >= 300

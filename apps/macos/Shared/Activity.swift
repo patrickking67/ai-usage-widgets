@@ -84,6 +84,28 @@ struct ModelShare: Codable, Hashable, Identifiable {
     }
 }
 
+/// A project's tokens over the last seven days, named from the folder the
+/// session ran in. Worktrees count toward their repository.
+struct ProjectShare: Codable, Hashable, Identifiable {
+    var id: String { name }
+    var name: String
+    var tokens: Double
+    var vendor: Vendor             // the tool that spent most of them
+
+    /// "/Users/me/GitHub/app/.claude/worktrees/fix" → "app"; the home folder →
+    /// "Home"; temp and scratch folders → "Scratch".
+    static func name(cwd: String, home: String) -> String {
+        var p = cwd.hasSuffix("/") ? String(cwd.dropLast()) : cwd
+        for marker in ["/.claude/worktrees/", "/.worktrees/"] {
+            if let r = p.range(of: marker) { p = String(p[..<r.lowerBound]) }
+        }
+        if p == home || p.isEmpty { return "Home" }
+        if p.contains("/scratch-workspaces/") || p.hasPrefix("/tmp") || p.hasPrefix("/private/tmp")
+            || p.hasPrefix("/private/var/folders") { return "Scratch" }
+        return (p as NSString).lastPathComponent
+    }
+}
+
 /// One thing that drove Claude Code's work — an MCP server, a skill or a
 /// subagent type — with the share of Claude tokens spent in the session-hours
 /// it was active. Shares overlap, so they do not sum to 100%.
@@ -106,12 +128,45 @@ struct Activity: Codable, Hashable {
     var longContextShare: Double?  // of Claude tokens sent with >150k context, last 24h
 
     var copilot24h: TokenBreakdown? = nil
+    /// Last 7 days by project, largest first.
+    var projects: [ProjectShare]? = nil
+    /// Tokens by weekday (Monday first) and local hour, over the last 30 days.
+    var heat: [[Double]]? = nil
+
+    /// The busiest weekday and hour in `heat`, e.g. (1, 14) for Tuesday 2 PM.
+    var peak: (weekday: Int, hour: Int)? {
+        guard let heat else { return nil }
+        var best: (Int, Int, Double)?
+        for (d, row) in heat.enumerated() {
+            for (h, v) in row.enumerated() where v > (best?.2 ?? 0) { best = (d, h, v) }
+        }
+        return best.map { ($0.0, $0.1) }
+    }
 
     var week: [DayUsage] { Array(days.suffix(7)) }
     var weekTotal: Double { week.reduce(0) { $0 + $1.total } }
     var monthTotal: Double { days.reduce(0) { $0 + $1.total } }
     /// Vendors with any tokens in `days`, in a stable order: the chart's series.
     var vendors: [Vendor] { Vendor.allCases.filter { v in days.contains { $0.tokens(v) > 0 } } }
+
+    /// The last seven days against the seven before, as a change (0.42 is up
+    /// 42%). Nil without both weeks, or when the earlier one was empty.
+    var weekOverWeek: Double? {
+        guard days.count >= 14 else { return nil }
+        let before = days.suffix(14).prefix(7).reduce(0) { $0 + $1.total }
+        return before > 0 ? weekTotal / before - 1 : nil
+    }
+
+    /// Each tool's share of the last `span` days, largest first.
+    func vendorShares(span: Int) -> [(vendor: Vendor, tokens: Double, share: Double)] {
+        let recent = days.suffix(span)
+        let total = recent.reduce(0) { $0 + $1.total }
+        guard total > 0 else { return [] }
+        return Vendor.allCases.map { v in (v, recent.reduce(0) { $0 + $1.tokens(v) }) }
+            .filter { $0.1 > 0 }
+            .map { (vendor: $0.0, tokens: $0.1, share: $0.1 / total) }
+            .sorted { $0.tokens > $1.tokens }
+    }
 
     /// One concrete habit worth changing, picked from the strongest signal.
     var tip: String? {

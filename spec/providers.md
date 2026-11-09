@@ -25,6 +25,14 @@ Rules that apply to every lane:
 
 ---
 
+## Codex (OpenAI)
+
+Both requests go to `chatgpt.com` with the `access_token` from `~/.codex/auth.json` as a bearer token and its `account_id` as `ChatGPT-Account-Id`, read only.
+
+- `GET /backend-api/wham/usage`, every minute: `plan_type`, and `rate_limit.primary_window` / `secondary_window` with `used_percent`, `limit_window_seconds` and `reset_at`. This is what Codex's own `/status` reads.
+- `GET /backend-api/accounts/check/v4-2023-04-27`, hourly: `accounts[<account_id>].account` has `name` and `structure`. A `workspace` structure's `name` is the card's account name; personal accounts have none.
+- Fallback: the last `rate_limits` in the newest rollout under `~/.codex/sessions`.
+
 ## Cursor
 
 ### Token location

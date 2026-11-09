@@ -64,6 +64,8 @@ Built from the vendors' local logs; this machine only.
 | `claude24h`, `codex24h`, `copilot24h?` | `{input, output, cacheRead, cacheWrite, requests}` over the last 24 h. |
 | `drivers` | `{name, kind: "MCP"\|"Skill"\|"Subagent", calls, share}` — share of Claude tokens spent in session-hours the driver was active. Overlapping. |
 | `subagentShare`, `longContextShare` | 0–1 shares of Claude tokens from subagents / sent with > 150k context. |
+| `projects?` | `[{name, tokens, vendor}]`, last 7 days, largest first, at most 12. `name` is the session's working folder, a worktree counted toward its repository; `Home`, `Scratch` and `Other` (unknown) are reserved. |
+| `heat?` | 7 × 24 tokens, weekday rows Monday first by local hour, last 30 days. |
 
 "Total tokens" = input + output + cache read + cache write, matching how the
 vendors' own dashboards count.

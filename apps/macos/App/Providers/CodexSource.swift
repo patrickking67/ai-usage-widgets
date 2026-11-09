@@ -25,6 +25,9 @@ final class CodexSource: ProviderSource {
     private var live: Live?
     private var nextAttempt = Date.distantPast
     private var lastFetch = Date.distantPast
+    /// The ChatGPT workspace's own name, asked for hourly; the token doesn't carry it.
+    private var workspace: String?
+    private var nextWorkspace = Date.distantPast
     private var inFlight = false
 
     func refreshNow() { nextAttempt = max(lastFetch.addingTimeInterval(20), .now) }
@@ -58,7 +61,7 @@ final class CodexSource: ProviderSource {
             updated = mtime
             meters = Self.rolloutMeters(limits, mtime: mtime)
         }
-        let account = Local.override("codexAccountName") ?? (isWorkspace ? "" : "Personal")
+        let account = Local.override("codexAccountName") ?? (isWorkspace ? (workspace ?? "") : "Personal")
         return ProviderUsage(vendor: .codex, account: account, plan: plan, meters: meters, updatedAt: updated)
     }
 
@@ -66,13 +69,15 @@ final class CodexSource: ProviderSource {
         s >= 600_000 ? "Weekly" : s <= 18_000 ? "Current" : "\(Int(s / 3600))h"
     }
 
-    /// Every 90 seconds; hourly while the token is expired or refused.
+    /// Every 60 seconds; hourly while the token is expired or refused.
     private func refreshLive() {
         guard interactive, !inFlight, Date() >= nextAttempt,
               let tokens = Local.json(dir.appendingPathComponent("auth.json"))?["tokens"] as? [String: Any],
               let token = tokens["access_token"] as? String, !token.isEmpty else { return }
         inFlight = true
-        nextAttempt = Date().addingTimeInterval(90)
+        nextAttempt = Date().addingTimeInterval(60)
+        let accountID = tokens["account_id"] as? String
+        let wantsWorkspace = Date() >= nextWorkspace
         var req = URLRequest(url: URL(string: "https://chatgpt.com/backend-api/wham/usage")!, timeoutInterval: 15)
         req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         if let acct = tokens["account_id"] as? String { req.setValue(acct, forHTTPHeaderField: "ChatGPT-Account-Id") }
@@ -92,6 +97,15 @@ final class CodexSource: ProviderSource {
                     onUpdate?(); return
                 }
                 let decoded = Self.decodeLive(root)
+                if wantsWorkspace {
+                    var w = req
+                    w.url = URL(string: "https://chatgpt.com/backend-api/accounts/check/v4-2023-04-27")
+                    if let (d, r) = try? await URLSession.shared.data(for: w), (r as? HTTPURLResponse)?.statusCode == 200,
+                       let o = try? JSONSerialization.jsonObject(with: d) as? [String: Any] {
+                        workspace = Self.workspaceName(o, accountID: accountID)
+                        nextWorkspace = Date().addingTimeInterval(3600)
+                    }
+                }
                 lastFetch = Date()
                 live = Live(plan: decoded.plan, meters: decoded.meters, fetchedAt: lastFetch.timeIntervalSince1970)
                 problem = nil
@@ -100,6 +114,16 @@ final class CodexSource: ProviderSource {
                 log.error("codex live: \(error.localizedDescription, privacy: .public)")   // offline: try next round
             }
         }
+    }
+
+    /// The selected workspace's name from `accounts/check`; nil for a personal
+    /// account or one without a name.
+    nonisolated static func workspaceName(_ root: [String: Any], accountID: String?) -> String? {
+        guard let id = accountID,
+              let acct = ((root["accounts"] as? [String: Any])?[id] as? [String: Any])?["account"] as? [String: Any],
+              acct["structure"] as? String == "workspace",
+              let name = (acct["name"] as? String)?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { return nil }
+        return name
     }
 
     /// The `wham/usage` response: `plan_type` and up to two windows under

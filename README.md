@@ -14,6 +14,8 @@
 - **A ring in the menu bar.** One ring per lane, filled to its hottest window, instead of a row of numbers. Percentages are a setting away.
 - **Keep Awake.** The cup in the popover stops the Mac sleeping while agents work, for an hour, or until you turn it off, like `caffeinate`.
 - **Notifications** when a window is running hot, at 80% and 95%, when it's used up (with when it comes back) and when it resets. Clicking one opens the dashboard.
+- **Analytics.** 30 days by tool, model and project, the change on last week, and a heatmap of when your tokens go.
+- **Shortcuts and Spotlight.** Ask for usage, set Keep Awake or open the dashboard from Shortcuts, Spotlight or Siri.
 - **VoiceOver.** Each meter, ring and the menu bar label read as one sentence: percent used, when it resets and the pace.
 
 There is no hosted site. [`docs/index.html`](docs/index.html) is a static page you can preview locally (see [Preview the page](#preview-the-page)).
@@ -38,7 +40,7 @@ Every credential read is read-only. TokenMeter never refreshes, rotates, stores,
 | Lane | Reads (macOS) | Sends to |
 | --- | --- | --- |
 | Claude | `~/.claude.json` (`oauthAccount`: plan and org name, no secrets). The status line feed `~/.cache/tokenmeter/usage.json`. The access token from the Keychain item `Claude Code-credentials`, via `/usr/bin/security find-generic-password -w`, the same tool Claude Code uses, so there is no Keychain prompt. | `api.anthropic.com/api/oauth/usage` and `/api/oauth/profile`, bearer token. Turn off with Settings > Advanced > "Read Claude limits directly". |
-| Codex | `~/.codex/auth.json`: the `id_token` is decoded locally for the plan; the `access_token` and `account_id` go in the request. Rollouts under `~/.codex/sessions`. | `chatgpt.com/backend-api/wham/usage`, bearer token |
+| Codex | `~/.codex/auth.json`: the `id_token` is decoded locally for the plan; the `access_token` and `account_id` go in the request. Rollouts under `~/.codex/sessions`. | `chatgpt.com/backend-api/wham/usage` every minute and `chatgpt.com/backend-api/accounts/check` hourly (the workspace name), bearer token |
 | GitHub Copilot | Nothing. TokenMeter runs `gh api /copilot_internal/user`, so the GitHub token stays inside `gh`. | `api.github.com`, made by `gh` |
 | Cursor (beta) | `cursorAuth/accessToken` from Cursor's `state.vscdb`, opened with SQLite read-only. | `cursor.com/api/usage-summary`, as the session cookie Cursor's dashboard uses |
 | Grok (beta) | The sign-in entry in `~/.grok/auth.json` (or `$GROK_HOME`), never a plain API key. | `cli-chat-proxy.grok.com/v1/billing` and `/v1/settings`, bearer token |
