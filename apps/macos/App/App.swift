@@ -111,6 +111,12 @@ enum Entry {
             }
             exit(0)
         }
+        // One copy only: the login agent and a double-click can both start it.
+        let me = ProcessInfo.processInfo.processIdentifier
+        if NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "")
+            .contains(where: { $0.processIdentifier != me }) {
+            exit(0)
+        }
         TokenMeterApp.main()
     }
 }
@@ -138,8 +144,7 @@ struct TokenMeterApp: App {
     private let tick = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
     init() {
-        // First launch: register as a login item so the menu bar survives reboots.
-        if SMAppService.mainApp.status == .notRegistered { try? SMAppService.mainApp.register() }
+        LoginItem.setUpOnLaunch()
     }
 
     var body: some Scene {
@@ -149,7 +154,12 @@ struct TokenMeterApp: App {
                 .onAppear { collector.refreshLimits(); now = Date() }
         } label: {
             MenuBarLabel(board: collector.board, now: now)
-                .task { collector.start(); DockPolicy.apply() }
+                .task {
+                    collector.start()
+                    KeepAwake.shared.onTimerEnded = { Alerts.shared.post("Keep Awake ended", "Your Mac can sleep again.") }
+                    KeepAwake.shared.start()
+                    DockPolicy.apply()
+                }
                 .onReceive(tick) { now = $0 }
                 .modifier(URLRouter(refresh: collector.refreshNow))
         }
@@ -185,8 +195,27 @@ private struct URLRouter: ViewModifier {
 struct MenuBarLabel: View {
     var board: UsageBoard?
     var now: Date
+    @AppStorage(MenuBarPrefs.styleKey) private var style = MenuBarPrefs.logo
+    @ObservedObject private var awake = KeepAwake.shared
 
     var body: some View {
+        let lanes = (board?.providers ?? []).filter { !$0.meters.isEmpty && MenuBarPrefs.shows($0.vendor) }
+        Group {
+            if style == MenuBarPrefs.logo {
+                Image(nsImage: MenuBarGlyph.image(
+                    fractions: lanes.map { $0.hottest(at: now)?.fraction(at: now) ?? 0 }, awake: awake.holding))
+            } else {
+                percentages
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("TokenMeter")
+        .accessibilityValue((lanes.map { $0.spokenHottest(at: now) } + (awake.holding ? ["keeping the Mac awake"] : []))
+            .joined(separator: "; "))
+    }
+
+    /// The older label: each vendor's mark with its hottest window.
+    private var percentages: some View {
         HStack(spacing: 6) {
             // Lanes without a percentage (an uncapped Copilot seat) live in the
             // popover only; the menu bar is for what can run out.
@@ -206,11 +235,8 @@ struct MenuBarLabel: View {
             } else {
                 VendorMark(vendor: .claude)
             }
+            if awake.holding { Image(systemName: "cup.and.saucer.fill") }
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("TokenMeter")
-        .accessibilityValue((board?.providers ?? []).filter { !$0.meters.isEmpty && MenuBarPrefs.shows($0.vendor) }
-            .map { $0.spokenHottest(at: now) }.joined(separator: "; "))
     }
 }
 
@@ -247,6 +273,7 @@ struct PopoverView: View {
                         Text("Activity").tag(1)
                     }
                     .pickerStyle(.segmented).labelsHidden().fixedSize()
+                    KeepAwakeMenu()
                     Button(action: refresh) { Image(systemName: "arrow.clockwise") }
                         .buttonStyle(.borderless)
                         .help("Refresh")
@@ -305,6 +332,40 @@ struct PopoverView: View {
                     .keyboardShortcut("q")
             }
             .buttonStyle(.borderless).font(.system(size: 11))
+        }
+    }
+}
+
+/// The cup in the popover header: Keep Awake's modes, and whether the screen
+/// stays on too. Filled while the Mac is being kept awake.
+struct KeepAwakeMenu: View {
+    @ObservedObject private var awake = KeepAwake.shared
+
+    var body: some View {
+        Menu {
+            Picker("Keep Awake", selection: Binding(get: { awake.mode }, set: { awake.set($0) })) {
+                ForEach(AwakeMode.allCases) { Text($0.title).tag($0) }
+            }
+            .pickerStyle(.inline)
+            Divider()
+            Toggle("Keep the screen on too", isOn: $awake.screenOn)
+        } label: {
+            Image(systemName: awake.holding ? "cup.and.saucer.fill" : "cup.and.saucer")
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help(help)
+        .accessibilityLabel("Keep Awake")
+        .accessibilityValue(help)
+    }
+
+    private var help: String {
+        switch awake.mode {
+        case .off:    return "Keep Awake is off"
+        case .on:     return "Keeping the Mac awake until turned off"
+        case .hour:   return awake.until.map { "Keeping the Mac awake until \($0.formatted(date: .omitted, time: .shortened))" } ?? "Keep Awake"
+        case .agents: return awake.holding ? "Keeping the Mac awake while agents work" : "Will keep the Mac awake when an agent starts working"
         }
     }
 }

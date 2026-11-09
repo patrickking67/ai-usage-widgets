@@ -48,6 +48,17 @@ struct Meter: Codable, Hashable, Identifiable {
         return used / e
     }
 
+    /// Used up: nothing left until the reset.
+    func atLimit(at now: Date) -> Bool { fraction(at: now) >= 0.995 }
+
+    /// "back in 4h 12m", or "back Tuesday" more than a day out.
+    func backText(at now: Date) -> String? {
+        guard let r = resetDate, r > now else { return nil }
+        if r.timeIntervalSince(now) < 86_400 { return "back in \(r.countdown(from: now))" }
+        let f = DateFormatter(); f.dateFormat = "EEEE"
+        return "back \(f.string(from: r))"
+    }
+
     /// When this rate reaches 100%, if that lands before the reset.
     func limitDate(at now: Date) -> Date? {
         guard let r = resetDate, let e = elapsedFraction(at: now), e >= 0.08,
@@ -215,6 +226,10 @@ struct UsageBoard: Codable, Hashable {
     var providers: [ProviderUsage]
     var activity: Activity? = nil
 
+    /// The app rewrites the board at least every five minutes while it runs,
+    /// so an older one means it isn't running and every number is frozen.
+    func isStale(at now: Date) -> Bool { now.timeIntervalSince1970 - generatedAt > 15 * 60 }
+
     static let placeholder: UsageBoard = {
         let now = Date().timeIntervalSince1970
         return UsageBoard(generatedAt: now, providers: [
@@ -270,6 +285,9 @@ enum Palette {
 
 /// Which lanes appear in the menu bar; all by default. Set in Settings.
 enum MenuBarPrefs {
+    /// "logo" (rings, the default) or "percent" (vendor marks and numbers).
+    static let styleKey = "menuBar.style"
+    static let logo = "logo"
     static func key(_ v: Vendor) -> String { "menuBar.\(v.rawValue)" }
     static func shows(_ v: Vendor) -> Bool {
         UserDefaults.standard.object(forKey: key(v)) as? Bool ?? true

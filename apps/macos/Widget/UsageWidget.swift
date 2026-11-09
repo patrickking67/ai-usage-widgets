@@ -132,6 +132,7 @@ struct UsageWidgetView: View {
             default:           MediumUsageView(entry: entry)
             }
         }
+        .overlay(alignment: .bottomTrailing) { StaleBoardBadge(board: entry.board, now: entry.date) }
         .containerBackground(for: .widget) { Color.clear.background(.background) }
         .widgetURL(dashboardURL)
     }
@@ -182,6 +183,7 @@ struct ActivityWidgetView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .overlay(alignment: .bottomTrailing) { StaleBoardBadge(board: entry.board, now: entry.date) }
         .containerBackground(for: .widget) { Color.clear.background(.background) }
         .widgetURL(dashboardURL)
     }
@@ -219,6 +221,7 @@ struct RingsWidgetView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .overlay(alignment: .bottomTrailing) { StaleBoardBadge(board: entry.board, now: entry.date) }
         .containerBackground(for: .widget) { Color.clear.background(.background) }
         .widgetURL(dashboardURL)
     }

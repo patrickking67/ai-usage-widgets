@@ -23,8 +23,17 @@ final class CopilotSource: ProviderSource {
     private var nextAttempt = Date.distantPast
     private var inFlight = false
 
-    static let ghCandidates = ["/opt/homebrew/bin/gh", "/usr/local/bin/gh", "/usr/bin/gh"]
-    private var gh: String? { Self.ghCandidates.first { FileManager.default.isExecutableFile(atPath: $0) } }
+    /// Where gh is installed by Homebrew, the system, and the user-level
+    /// managers (pixi, Nix, `~/.local/bin`). A GUI app gets launchd's bare
+    /// PATH, so these are looked up directly rather than through PATH.
+    nonisolated static func ghCandidates(home: String) -> [String] {
+        ["/opt/homebrew/bin/gh", "/usr/local/bin/gh", "/usr/bin/gh",
+         "\(home)/.pixi/bin/gh", "\(home)/.local/bin/gh", "\(home)/.nix-profile/bin/gh",
+         "/run/current-system/sw/bin/gh"]
+    }
+    private var gh: String? {
+        Self.ghCandidates(home: UsageStore.realHome.path).first { FileManager.default.isExecutableFile(atPath: $0) }
+    }
 
     var isInstalled: Bool { gh != nil }
 
@@ -67,7 +76,8 @@ final class CopilotSource: ProviderSource {
         proc.executableURL = URL(fileURLWithPath: gh)
         proc.arguments = ["api", "/copilot_internal/user"]
         // A GUI app has launchd's bare PATH; gh wants a HOME for its config.
-        proc.environment = ["HOME": UsageStore.realHome.path, "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin",
+        let dir = (gh as NSString).deletingLastPathComponent
+        proc.environment = ["HOME": UsageStore.realHome.path, "PATH": "\(dir):/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin",
                             "GH_PROMPT_DISABLED": "1", "NO_COLOR": "1"]
         let out = Pipe(), err = Pipe()
         proc.standardOutput = out; proc.standardError = err

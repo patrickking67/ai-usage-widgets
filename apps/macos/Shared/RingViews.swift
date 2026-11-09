@@ -27,16 +27,28 @@ struct RingStack: View {
                 ZStack {
                     ForEach(Array(providers.enumerated()), id: \.element.id) { i, p in
                         let m = p.hottest(at: now)
-                        UsageRing(fraction: m?.fraction(at: now) ?? 0, tint: Palette.vendor(p.vendor), lineWidth: line)
+                        UsageRing(fraction: m?.fraction(at: now) ?? 0, tint: Palette.vendor(p.vendor), lineWidth: line,
+                                  pace: p.isStale(at: now) ? nil : m?.elapsedFraction(at: now))
                             .padding(CGFloat(i) * (line + 2.5))
                             .opacity(p.isStale(at: now) ? 0.5 : 1)
                     }
                     if let (p, m) = hot {
                         VStack(spacing: 0) {
-                            Text("\(Int((m.fraction(at: now) * 100).rounded()))%")
-                                .font(.system(size: side * 0.15, weight: .semibold, design: .rounded))
-                                .monospacedDigit()
-                                .contentTransition(.numericText(value: m.fraction(at: now)))
+                            // At the limit the number says nothing new; when it comes back does.
+                            if m.atLimit(at: now) {
+                                Text("Limit")
+                                    .font(.system(size: side * 0.12, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(m.tint(at: now))
+                                if let back = m.backText(at: now) {
+                                    Text(back).font(.system(size: side * 0.075, weight: .medium))
+                                        .foregroundStyle(.secondary).monospacedDigit()
+                                }
+                            } else {
+                                Text("\(Int((m.fraction(at: now) * 100).rounded()))%")
+                                    .font(.system(size: side * 0.15, weight: .semibold, design: .rounded))
+                                    .monospacedDigit()
+                                    .contentTransition(.numericText(value: m.fraction(at: now)))
+                            }
                             if m.limitDate(at: now) != nil, !p.isStale(at: now) {
                                 Image(systemName: "flame.fill").font(.system(size: side * 0.08))
                                     .foregroundStyle(m.tint(at: now)).widgetAccentable()
@@ -67,7 +79,7 @@ private struct RingLegend: View {
         let m = provider.hottest(at: now)
         HStack(spacing: 3) {
             VendorIcon(vendor: provider.vendor, size: 11)
-            Text(m.map { "\(Int(($0.fraction(at: now) * 100).rounded()))%" } ?? "—")
+            Text(m.map { $0.atLimit(at: now) ? "Limit" : "\(Int(($0.fraction(at: now) * 100).rounded()))%" } ?? "—")
                 .font(.system(size: 10, weight: .semibold, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(provider.isStale(at: now) ? .secondary : .primary)
@@ -101,11 +113,12 @@ private struct RingCell: View {
         let stale = provider.isStale(at: now)
         VStack(spacing: 6) {
             ZStack {
-                UsageRing(fraction: f, tint: Palette.vendor(provider.vendor), lineWidth: 8)
+                UsageRing(fraction: f, tint: Palette.vendor(provider.vendor), lineWidth: 8,
+                          pace: stale ? nil : m?.elapsedFraction(at: now))
                     .opacity(stale ? 0.5 : 1)
                 VStack(spacing: 1) {
                     VendorIcon(vendor: provider.vendor, size: 13)
-                    Text(m == nil ? "—" : "\(Int((f * 100).rounded()))%")
+                    Text(m == nil ? "—" : m!.atLimit(at: now) ? "Limit" : "\(Int((f * 100).rounded()))%")
                         .font(.system(size: 15, weight: .semibold, design: .rounded))
                         .monospacedDigit()
                         .foregroundStyle(stale ? AnyShapeStyle(.secondary) : AnyShapeStyle(m?.tint(at: now) ?? .primary))
@@ -119,6 +132,8 @@ private struct RingCell: View {
                 Group {
                     if stale, let u = provider.updated {
                         Text(u.ago(from: now))
+                    } else if let m, m.atLimit(at: now), let back = m.backText(at: now) {
+                        Text(back.prefix(1).uppercased() + back.dropFirst())
                     } else if let m {
                         ResetLabel(meter: m, now: now)
                     }
@@ -139,6 +154,27 @@ extension Vendor {
         case .claude:  "Claude"
         case .copilot: "Copilot"
         default:       displayName
+        }
+    }
+}
+
+/// "Paused 07:05" when the menu bar app hasn't written the board for a while:
+/// every number is frozen, and a widget shouldn't look current when it isn't.
+struct StaleBoardBadge: View {
+    var board: UsageBoard?
+    var now: Date
+
+    var body: some View {
+        if let board, board.isStale(at: now) {
+            let at = Date(timeIntervalSince1970: board.generatedAt)
+            let when = Calendar.current.isDate(at, inSameDayAs: now)
+                ? at.formatted(date: .omitted, time: .shortened) : at.formatted(.dateTime.weekday(.abbreviated))
+            Label("Paused \(when)", systemImage: "pause.circle.fill")
+                .font(.system(size: 8.5, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 6).padding(.vertical, 3)
+                .background(.thinMaterial, in: Capsule())
+                .accessibilityLabel("Not updated since \(when). Open TokenMeter to resume.")
         }
     }
 }

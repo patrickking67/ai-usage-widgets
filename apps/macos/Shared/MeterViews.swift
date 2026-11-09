@@ -78,22 +78,35 @@ struct UsageRing: View {
     var fraction: Double
     var tint: Color
     var lineWidth: CGFloat = 7
+    /// Where even use would put the fill, as the bars' notch does.
+    var pace: Double? = nil
     private var vibrant = IsVibrant()
 
-    init(fraction: Double, tint: Color, lineWidth: CGFloat = 7) {
-        self.fraction = fraction; self.tint = tint; self.lineWidth = lineWidth
+    init(fraction: Double, tint: Color, lineWidth: CGFloat = 7, pace: Double? = nil) {
+        self.fraction = fraction; self.tint = tint; self.lineWidth = lineWidth; self.pace = pace
     }
 
     var body: some View {
         let style = StrokeStyle(lineWidth: lineWidth, lineCap: .round)
-        // A sliver keeps the round cap visible at 0%, so an empty lane still reads as a ring.
-        let arc = Circle().trim(from: 0, to: min(max(fraction, 0.002), 1)).rotation(.degrees(-90))
+        let arc = Circle().trim(from: 0, to: min(fraction, 1)).rotation(.degrees(-90))
         ZStack {
             Circle().stroke(.primary.opacity(vibrant.wrappedValue ? 0.22 : 0.12), lineWidth: lineWidth)
-            if vibrant.wrappedValue {
-                arc.stroke(.primary, style: style).widgetAccentable()
-            } else {
-                arc.stroke(tint.gradient, style: style)
+            // Nothing used, nothing drawn: a round cap alone reads as a dot of usage.
+            if fraction >= 0.005 {
+                if vibrant.wrappedValue {
+                    arc.stroke(.primary, style: style).widgetAccentable()
+                } else {
+                    arc.stroke(tint.gradient, style: style)
+                }
+            }
+            if let pace, pace > 0.02, pace < 0.98 {
+                GeometryReader { g in
+                    Capsule()
+                        .fill(.primary.opacity(vibrant.wrappedValue ? 0.9 : 0.6))
+                        .frame(width: 1.5, height: lineWidth + 3)
+                        .position(x: g.size.width / 2, y: g.size.height / 2 - min(g.size.width, g.size.height) / 2)
+                        .rotationEffect(.degrees(360 * pace))
+                }
             }
         }
         .padding(lineWidth / 2)

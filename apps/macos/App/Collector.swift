@@ -34,6 +34,7 @@ final class Collector: ObservableObject {
     private let scanQueue = DispatchQueue(label: "tokenmeter.activity", qos: .utility)
     private var scanning = false
     private var lastScan = Date.distantPast
+    private var lastWrite = Date.distantPast
 
     init() {
         Prefs.migrateLegacyDefaults()
@@ -86,9 +87,13 @@ final class Collector: ObservableObject {
         let changed = next.providers != board?.providers || next.activity != board?.activity
         board = next
         if interactive { Alerts.shared.evaluate(next) }
-        guard changed else { return }
+        // Rewritten unchanged every five minutes too, so readers can tell a
+        // quiet board from an app that has stopped (UsageBoard.isStale).
+        let heartbeat = now.timeIntervalSince(lastWrite) >= 300
+        guard changed || heartbeat else { return }
         write(next)
-        WidgetCenter.shared.reloadAllTimelines()
+        lastWrite = now
+        if changed { WidgetCenter.shared.reloadAllTimelines() }
     }
 
     private func write(_ board: UsageBoard) {
