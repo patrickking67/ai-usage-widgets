@@ -77,6 +77,8 @@ targets:
       - Shared/Usage.swift
       - Shared/Activity.swift
       - App/ClaudeLive.swift
+      - App/LoginItem.swift
+      - App/KeepAwake.swift
       - App/Providers
     settings:
       base:

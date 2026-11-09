@@ -7,6 +7,10 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- **Ring logo in the menu bar.** One ring per lane (two at most), filled to its hottest window, replaces the vendor marks and percentages, which stay available in Settings, General, Menu bar.
+- **Keep Awake.** A cup in the popover header holds a power assertion while Claude Code or Codex is writing a session (last 5 minutes), for one hour, or until turned off. An option keeps the screen on too. The menu bar ring shows a dot while it holds.
+- **Notifications** for a window on pace to run out before its reset (from 40%), for a window used up (with when it comes back), and when a one-hour Keep Awake ends. Clicking any notification opens the dashboard, and they show while the app is in front.
+- **Paused badge on widgets** when the board hasn't been written for 15 minutes, so frozen numbers don't look live. The app now rewrites the board every five minutes even when nothing changed.
 - **VoiceOver.** Each meter, ring, the menu bar label, extra spend and the weekly breakdown read as one sentence: percent used, reset and pace. Vendor icons are hidden as decorative and the refresh button has a label.
 - **macOS unit tests** (`apps/macos/Tests`) for every lane's response parsing, pace math and spoken text, from new synthetic fixtures in `spec/fixtures`. The test bundle is not hosted in the app, so it never reads a credential or makes a request.
 - **One check command**, `scripts/check.sh`: shellcheck, actionlint, JSON and PowerShell syntax, plugin tests, Windows core tests, macOS unit tests and an unsigned build. CI runs it.
@@ -17,6 +21,9 @@ All notable changes to this project are documented here. The format follows
 - **Where the week went**: Claude's weekly window split by surface (Cowork, Claude Code, Chats…) under the Claude card.
 
 ### Fixed
+- TokenMeter didn't come back after a restart. It registered as a login item only when the status read exactly `notRegistered`. It now registers once on first launch, checks the result, and falls back to a per-user LaunchAgent that also restarts it after a crash. A second copy started alongside quits.
+- The Copilot lane stayed hidden when `gh` was installed outside Homebrew or `/usr` (pixi, Nix, `~/.local/bin`).
+- Rings: a window that's used up reads "Limit" and when it comes back instead of 100%, a lane at 0% no longer draws a dot, and each ring has the pace tick the bars have.
 - Cursor: a usage summary with a billing cycle end but no start crashed the app. Either end missing now falls back to a 30-day window.
 - The static page's install steps changed into a `tokenmeter` folder that a clone does not create. It also gains a main landmark, skip link, visible focus, reduced-motion support and AA contrast for muted text.
 - The Windows core tests ran under Invoke-Pester, which counted 0 tests because the file has no Describe blocks. CI now runs the script directly so its failure count is the exit code.

@@ -18,7 +18,7 @@ must tolerate a missing file, unknown keys and unknown vendors.
 
 ```jsonc
 {
-  "generatedAt": 1790566371.08,          // unix seconds
+  "generatedAt": 1790566371.08,          // unix seconds; rewritten at least every 5 min while the app runs
   "providers": [ Provider ],             // one per vendor with any data
   "activity": Activity | null            // absent until the first log scan
 }

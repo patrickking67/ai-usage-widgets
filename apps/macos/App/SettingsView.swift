@@ -21,7 +21,8 @@ struct SettingsView: View {
 
 private struct GeneralPane: View {
     @ObservedObject var collector: Collector
-    @State private var loginItem = SMAppService.mainApp.status == .enabled
+    @State private var loginItem = LoginItem.isEnabled
+    @State private var loginError: String?
     @AppStorage(Alerts.enabledKey) private var alerts = true
     @AppStorage(DockPolicy.key) private var showInDock = false
 
@@ -29,9 +30,10 @@ private struct GeneralPane: View {
         Form {
             Section {
                 Toggle("Open at login", isOn: $loginItem)
-                    .onChange(of: loginItem) { _, on in
-                        if on { try? SMAppService.mainApp.register() } else { try? SMAppService.mainApp.unregister() }
-                    }
+                    .onChange(of: loginItem) { _, on in loginError = LoginItem.setEnabled(on) }
+                if let loginError {
+                    Label(loginError, systemImage: "exclamationmark.triangle").foregroundStyle(.secondary)
+                }
                 Toggle("Show in Dock", isOn: $showInDock)
                     .onChange(of: showInDock) { _, _ in DockPolicy.apply() }
             } footer: {
@@ -42,6 +44,12 @@ private struct GeneralPane: View {
                     .onChange(of: alerts) { _, on in if on { Alerts.shared.requestPermission() } }
             }
             Section("Menu bar") {
+                Picker("Show", selection: Binding(
+                    get: { UserDefaults.standard.string(forKey: MenuBarPrefs.styleKey) ?? MenuBarPrefs.logo },
+                    set: { UserDefaults.standard.set($0, forKey: MenuBarPrefs.styleKey) })) {
+                    Text("Rings logo").tag(MenuBarPrefs.logo)
+                    Text("Percentages").tag("percent")
+                }
                 ForEach(Vendor.allCases, id: \.self) { v in
                     Toggle(isOn: Binding(
                         get: { MenuBarPrefs.shows(v) },

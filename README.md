@@ -11,6 +11,9 @@
 - **Where the tokens went.** 30 days of per-vendor tokens from local logs, the input/output/cache breakdown, and the MCP servers, skills and subagents that were running while your limit dropped.
 - **Everywhere you look.** A menu bar app, a dashboard window and desktop widgets on macOS. A tray app and desktop widget on Windows. A plugin and a clickable status line inside Claude Code.
 - **Reads, never writes.** It borrows the sign-ins your tools already have, never refreshes or stores a token, and has no server or telemetry.
+- **A ring in the menu bar.** One ring per lane, filled to its hottest window, instead of a row of numbers. Percentages are a setting away.
+- **Keep Awake.** The cup in the popover stops the Mac sleeping while agents work, for an hour, or until you turn it off, like `caffeinate`.
+- **Notifications** when a window is running hot, at 80% and 95%, when it's used up (with when it comes back) and when it resets. Clicking one opens the dashboard.
 - **VoiceOver.** Each meter, ring and the menu bar label read as one sentence: percent used, when it resets and the pace.
 
 There is no hosted site. [`docs/index.html`](docs/index.html) is a static page you can preview locally (see [Preview the page](#preview-the-page)).
@@ -21,7 +24,7 @@ There is no hosted site. [`docs/index.html`](docs/index.html) is a static page y
 | --- | --- | --- |
 | Claude | Status line feed plus Anthropic's usage endpoint, using Claude Code's own sign-in. Covers the 5-hour, weekly and per-model windows and extra spend. | `~/.claude/projects` transcripts |
 | Codex | Codex's own usage endpoint with Codex's sign-in, falling back to the `rate_limits` Codex records after every turn | Codex session rollouts |
-| GitHub Copilot | Premium-request allowance via `gh api /copilot_internal/user`. Uncapped seats show credits used. | VS Code agent-mode chat sessions |
+| GitHub Copilot | Premium-request allowance via `gh api /copilot_internal/user`. Uncapped seats show credits used. `gh` is found in Homebrew, system, pixi, Nix and `~/.local/bin` installs. | VS Code agent-mode chat sessions |
 | Cursor (beta) | Monthly usage pool and on-demand spend, using Cursor's local sign-in | None |
 | Grok (beta) | The SuperGrok credit pool from the `grok` CLI's billing endpoint | None |
 | Microsoft 365 Copilot | No lane: Microsoft exposes Copilot usage only to tenant admins, with no per-person limit to show. | None |
@@ -59,7 +62,7 @@ ditto build/Build/Products/Release/TokenMeter.app /Applications/TokenMeter.app
 open /Applications/TokenMeter.app
 ```
 
-Without `Local.xcconfig` the app builds ad-hoc signed: the menu bar app and dashboard run, but macOS only loads widgets signed with a real team. Then add the **Rings**, **Limits** and **Activity** widgets from the desktop's Edit Widgets menu. Open the dashboard from the popover's **Dashboard** button, with `open tokenmeter://dashboard`, or by Cmd-clicking **Dashboard** in the Claude Code status line.
+Without `Local.xcconfig` the app builds ad-hoc signed: the menu bar app and dashboard run, but macOS only loads widgets signed with a real team. The app opens at login on first launch (Settings, General to turn it off); if macOS won't register it as a login item it writes `~/Library/LaunchAgents/com.patrickking.tokenmeter.plist` instead. Then add the **Rings**, **Limits** and **Activity** widgets from the desktop's Edit Widgets menu. Open the dashboard from the popover's **Dashboard** button, with `open tokenmeter://dashboard`, or by Cmd-clicking **Dashboard** in the Claude Code status line.
 
 ### Windows 10 / 11
 
