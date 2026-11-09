@@ -42,7 +42,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.patrickking.tokenmeter
         PRODUCT_NAME: TokenMeter
-        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
   TokenMeterWidget:
     type: app-extension
     platform: macOS
