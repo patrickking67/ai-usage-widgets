@@ -127,10 +127,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     static let openDashboard = Notification.Name("tokenmeter.openDashboard")
     static let refresh = Notification.Name("tokenmeter.refresh")
 
+    /// Any web page can open a tokenmeter:// link, so refreshes from one are
+    /// limited to one a minute and can't be used to drive vendor requests.
+    private var lastLinkRefresh = Date.distantPast
+
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls where url.scheme == "tokenmeter" {
             switch url.host {
-            case "refresh": NotificationCenter.default.post(name: Self.refresh, object: nil)
+            case "refresh":
+                guard Date().timeIntervalSince(lastLinkRefresh) >= 60 else { continue }
+                lastLinkRefresh = Date()
+                NotificationCenter.default.post(name: Self.refresh, object: nil)
             default:        NotificationCenter.default.post(name: Self.openDashboard, object: nil)
             }
         }

@@ -66,12 +66,11 @@ enum ClaudeLive {
         req.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
         req.setValue("claude-code/2.1.316", forHTTPHeaderField: "User-Agent")
 
-        let (data, resp) = try await URLSession.shared.data(for: req)
+        let (data, resp) = try await VendorSession.shared.data(for: req)
         let status = (resp as? HTTPURLResponse)?.statusCode ?? -1
         if status != 200 {
-            // The error body names the reason (e.g. a missing scope); no secrets in it.
-            let body = String(decoding: data.prefix(400), as: UTF8.self)
-            log.error("live: HTTP \(status, privacy: .public): \(body, privacy: .public)")
+            // Status only: a vendor's error body is not ours to vouch for.
+            log.error("live: HTTP \(status, privacy: .public)")
         }
         switch status {
         case 200: break
@@ -223,5 +222,24 @@ enum ClaudeLive {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return f.date(from: s) ?? ISO8601DateFormatter().date(from: s)
+    }
+}
+
+/// The session every credentialed vendor request goes through. It refuses
+/// redirects, so an Authorization or Cookie header can never follow a 3xx to
+/// another host; a redirect surfaces as a non-200 status instead.
+enum VendorSession {
+    static let shared: URLSession = {
+        let config = URLSessionConfiguration.ephemeral
+        config.httpCookieStorage = nil
+        config.urlCache = nil
+        config.tlsMinimumSupportedProtocolVersion = .TLSv12
+        return URLSession(configuration: config, delegate: NoRedirects(), delegateQueue: nil)
+    }()
+
+    private final class NoRedirects: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+        func urlSession(_ session: URLSession, task: URLSessionTask,
+                        willPerformHTTPRedirection response: HTTPURLResponse,
+                        newRequest request: URLRequest) async -> URLRequest? { nil }
     }
 }

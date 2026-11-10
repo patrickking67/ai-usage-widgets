@@ -145,7 +145,7 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
       <a href="#features" class="opt">Features</a>
       <a href="#lanes" class="opt">Lanes</a>
       <a href="#install">Install</a>
-      <a href="https://github.com/patrickking67/ai-usage-widgets">GitHub</a>
+      <a href="https://github.com/patrickking67/tokenmeter">GitHub</a>
     </div>
   </div>
 </nav>
@@ -159,7 +159,7 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
     <p class="lede">TokenMeter shows how much of your Claude Code, Codex, GitHub Copilot and Cursor plans you have left, whether you're on pace to run out before the reset, and what's actually spending your tokens.</p>
     <div class="ctas">
       <a class="btn primary" href="#install">Get TokenMeter</a>
-      <a class="btn" href="https://github.com/patrickking67/ai-usage-widgets">View source</a>
+      <a class="btn" href="https://github.com/patrickking67/tokenmeter">View source</a>
     </div>
     <div class="vendors">
       <span class="chip"><span class="dot" aria-hidden="true" style="background:var(--accent)"></span>Claude Code</span>
@@ -257,23 +257,23 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
         <h3>macOS 14+</h3>
         <p>Menu bar app, dashboard window and two desktop widgets. Build it from source with Xcode:</p>
 <pre>brew install xcodegen
-git clone https://github.com/patrickking67/ai-usage-widgets
-cd ai-usage-widgets/apps/macos
+git clone https://github.com/patrickking67/tokenmeter
+cd tokenmeter/apps/macos
 xcodegen generate && open TokenMeter.xcodeproj</pre>
         <img src="img/shot-widget.png" alt="TokenMeter activity widgets on the macOS desktop" loading="lazy">
       </div>
       <div class="card">
         <h3>Windows 10 / 11</h3>
         <p>A tray icon, a desktop widget, and the same Settings and alerts. PowerShell 7 and WPF, with nothing extra to install:</p>
-<pre>git clone https://github.com/patrickking67/ai-usage-widgets
-cd ai-usage-widgets\apps\windows
+<pre>git clone https://github.com/patrickking67/tokenmeter
+cd tokenmeter\apps\windows
 .\install.ps1</pre>
         <ul><li>Starts at sign-in and writes <code>%LOCALAPPDATA%\TokenMeter\board.json</code></li><li>Reads Claude Code, Codex and Copilot the same way the Mac app does</li></ul>
       </div>
       <div class="card">
         <h3>Claude Code plugin</h3>
         <p>Limits and reports inside Claude Code, and a planning skill that checks your remaining headroom before starting a big task:</p>
-<pre>/plugin marketplace add patrickking67/ai-usage-widgets
+<pre>/plugin marketplace add patrickking67/tokenmeter
 /plugin install tokenmeter@tokenmeter</pre>
         <ul><li><code>/usage</code> shows limits, pace and the current hot window</li><li><code>/report</code> gives a weekly breakdown by vendor, model and driver</li><li>A statusline helper and a session-start heads-up</li></ul>
       </div>

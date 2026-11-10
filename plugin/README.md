@@ -10,7 +10,7 @@ reads credentials and never writes anything.
 ## Requirements
 
 - The TokenMeter app, installed and running:
-  https://github.com/patrickking67/ai-usage-widgets
+  https://github.com/patrickking67/tokenmeter
 - Python 3 on `PATH` (`python3`, `python` or `py`); standard library only.
 
 Board lookup order:
@@ -25,7 +25,7 @@ Board lookup order:
 ## Install
 
 ```text
-/plugin marketplace add patrickking67/ai-usage-widgets
+/plugin marketplace add patrickking67/tokenmeter
 /plugin install tokenmeter@tokenmeter
 ```
 

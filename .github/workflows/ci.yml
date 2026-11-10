@@ -16,8 +16,11 @@ jobs:
   check:
     name: scripts/check.sh
     runs-on: macos-15
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
       - name: Install tools
         run: brew install xcodegen shellcheck actionlint
       - name: Check
@@ -26,8 +29,11 @@ jobs:
   windows:
     name: Windows core tests
     runs-on: windows-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
       - name: Core tests on Windows
         shell: pwsh
         run: pwsh -NoProfile -File apps/windows/tests/Core.Tests.ps1

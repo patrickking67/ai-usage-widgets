@@ -25,7 +25,7 @@ never needs credentials.
 
 2. If it exits with code 2 and prints "No TokenMeter board found", relay that
    TokenMeter is not installed or not running, give the install link
-   (https://github.com/patrickking67/ai-usage-widgets) and the `TOKENMETER_BOARD`
+   (https://github.com/patrickking67/tokenmeter) and the `TOKENMETER_BOARD`
    override. Do not guess usage numbers.
 
 3. Otherwise summarize. Lead with a direct answer to the question asked, then

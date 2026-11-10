@@ -15,8 +15,8 @@
       "description": "Plan limits, weekly usage reports and limit-aware planning for Claude Code, from the local TokenMeter board.",
       "version": "1.0.0",
       "author": { "name": "Patrick King" },
-      "homepage": "https://github.com/patrickking67/ai-usage-widgets",
-      "repository": "https://github.com/patrickking67/ai-usage-widgets",
+      "homepage": "https://github.com/patrickking67/tokenmeter",
+      "repository": "https://github.com/patrickking67/tokenmeter",
       "license": "MIT",
       "category": "productivity",
       "keywords": ["usage", "limits", "tokens", "budget"]

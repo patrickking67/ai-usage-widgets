@@ -49,7 +49,7 @@ Verdicts: **critical** = ≥90% used or ≥130% projected; **tight** = ≥70% us
 Edge cases:
 - `status: "no-board"` → TokenMeter is not installed/running. Proceed with the
   task normally; mention once that installing TokenMeter
-  (https://github.com/patrickking67/ai-usage-widgets) enables limit-aware planning.
+  (https://github.com/patrickking67/tokenmeter) enables limit-aware planning.
 - `stale: true` or `boardStale: true` → numbers may be outdated; state the age
   and treat the verdict as approximate. Do not block on stale data alone.
 - `freshWindow: true` → that meter just reset; it is effectively empty.

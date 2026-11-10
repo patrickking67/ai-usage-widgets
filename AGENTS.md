@@ -1,6 +1,6 @@
 # AGENTS.md
 
-TokenMeter (repo `ai-usage-widgets`) shows AI coding plan limits for Claude, Codex, GitHub Copilot, Cursor and Grok: a macOS menu bar app with WidgetKit widgets, a Windows PowerShell and WPF tray app, and a Claude Code plugin. Start at `README.md`. The data contract every client shares is `spec/board.md`.
+TokenMeter (repo `tokenmeter`) shows AI coding plan limits for Claude, Codex, GitHub Copilot, Cursor and Grok: a macOS menu bar app with WidgetKit widgets, a Windows PowerShell and WPF tray app, and a Claude Code plugin. Start at `README.md`. The data contract every client shares is `spec/board.md`.
 
 ## Stack
 

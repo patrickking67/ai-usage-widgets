@@ -9,7 +9,7 @@
 
 ## Reporting a vulnerability
 
-Report privately through GitHub: <https://github.com/patrickking67/ai-usage-widgets/security/advisories/new>. Do not open a public issue, and do not include real tokens, cookies or auth files in the report.
+Report privately through GitHub: <https://github.com/patrickking67/tokenmeter/security/advisories/new>. Do not open a public issue, and do not include real tokens, cookies or auth files in the report.
 
 You can expect an acknowledgement within 7 days and an assessment within 30 days. Fixes land on `main` and are noted in `CHANGELOG.md`.
 
@@ -33,3 +33,7 @@ TokenMeter has no server, account or telemetry. It reads sign-ins that other too
 | Grok (macOS, beta) | Sign-in entry in `~/.grok/auth.json` | `cli-chat-proxy.grok.com` |
 
 The Codex `id_token` and Cursor access token are also decoded locally for the plan name and user ID; those claims are not stored. Logs (the macOS unified log, and `tokenmeter.log` on Windows) carry status codes and short error text only. The macOS widget is sandboxed with read-only access to `~/.cache/tokenmeter/`, so it never sees a credential. Full field-level detail is in `spec/providers.md`.
+
+## Release integrity
+
+macOS releases are built only by `.github/workflows/release.yml` (or `scripts/release-macos.sh` on the maintainer's Mac), signed with the maintainer's Developer ID Application certificate, notarized by Apple and stapled. Each release publishes `SHA256SUMS` and a GitHub build provenance attestation (`gh attestation verify`). The signing certificate and the App Store Connect API key live only in the `release` environment's secrets, which need a reviewer's approval to use, and in a temporary keychain deleted at the end of the run. Workflows pin third-party actions to commit SHAs and default to read-only `contents` permission.

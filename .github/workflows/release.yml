@@ -1,0 +1,100 @@
+name: Release
+
+# Builds, signs, notarizes and publishes the macOS app when a v* tag is pushed.
+# Runs in the "release" environment, so required reviewers on that environment
+# gate every run. Secrets it needs (set on the environment, never in the repo):
+#   MACOS_CERT_P12         base64 of the Developer ID Application .p12
+#   MACOS_CERT_PASSWORD    password for that .p12
+#   NOTARY_KEY_P8          base64 of an App Store Connect API key (.p8)
+#   NOTARY_KEY_ID          that key's ID
+#   NOTARY_ISSUER_ID       that key's issuer ID
+#   DEVELOPMENT_TEAM       10-character team ID
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  macos:
+    name: Signed macOS release
+    runs-on: macos-15
+    environment: release
+    permissions:
+      contents: write      # create the GitHub release
+      id-token: write      # build provenance attestation
+      attestations: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+
+      - name: Tag matches project version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version=$(sed -nE 's/^[[:space:]]*MARKETING_VERSION:[[:space:]]*"?([0-9.]+)"?.*/\1/p' apps/macos/project.yml | head -n 1)
+          [ "v$version" = "$TAG" ] || { echo "tag $TAG does not match MARKETING_VERSION $version" >&2; exit 1; }
+
+      - name: Install tools
+        run: brew install xcodegen
+
+      - name: Import signing certificate and notary key
+        env:
+          MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+          NOTARY_KEY_P8: ${{ secrets.NOTARY_KEY_P8 }}
+          NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          for v in MACOS_CERT_P12 MACOS_CERT_PASSWORD NOTARY_KEY_P8 NOTARY_KEY_ID NOTARY_ISSUER_ID; do
+            [ -n "${!v}" ] || { echo "missing secret $v on the release environment" >&2; exit 1; }
+          done
+          keychain="$RUNNER_TEMP/release.keychain-db"
+          kc_pass=$(openssl rand -hex 24)
+          security create-keychain -p "$kc_pass" "$keychain"
+          security set-keychain-settings -lut 3600 "$keychain"
+          security unlock-keychain -p "$kc_pass" "$keychain"
+          printf '%s' "$MACOS_CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$keychain" -P "$MACOS_CERT_PASSWORD" -T /usr/bin/codesign -T /usr/bin/xcodebuild
+          rm -f "$RUNNER_TEMP/cert.p12"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$kc_pass" "$keychain" > /dev/null
+          read -r -a existing <<< "$(security list-keychains -d user | tr -d '"' | xargs)"
+          security list-keychains -d user -s "$keychain" "${existing[@]}"
+          printf '%s' "$NOTARY_KEY_P8" | base64 --decode > "$RUNNER_TEMP/notary.p8"
+          xcrun notarytool store-credentials tokenmeter-notary --key "$RUNNER_TEMP/notary.p8" \
+            --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID" --keychain "$keychain" > /dev/null
+          rm -f "$RUNNER_TEMP/notary.p8"
+          echo "NOTARY_KEYCHAIN=$keychain" >> "$GITHUB_ENV"
+
+      - name: Build, sign and notarize
+        env:
+          DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
+        run: scripts/release-macos.sh
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/TokenMeter-*
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          notes=$(awk -v v="${TAG#v}" '$0 ~ "^## \\[" v "\\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md)
+          [ -n "$notes" ] || notes="See CHANGELOG.md."
+          gh release create "$TAG" dist/TokenMeter-*.dmg dist/TokenMeter-*.zip dist/SHA256SUMS \
+            --repo "$GITHUB_REPOSITORY" --title "TokenMeter ${TAG#v}" --notes "$notes" --verify-tag
+
+      - name: Remove keychain
+        if: always()
+        run: |
+          [ -n "${NOTARY_KEYCHAIN:-}" ] && security delete-keychain "$NOTARY_KEYCHAIN" || true

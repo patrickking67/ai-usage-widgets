@@ -215,7 +215,7 @@ private struct AboutPane: View {
             Text("Plan limits for Claude, Codex, Copilot, Cursor and Grok. Reads your tools' own sign-ins, writes nothing back, and sends nothing anywhere else.")
                 .multilineTextAlignment(.center).foregroundStyle(.secondary).frame(maxWidth: 380)
             HStack(spacing: 14) {
-                Link("Source on GitHub", destination: URL(string: "https://github.com/patrickking67/ai-usage-widgets")!)
+                Link("Source on GitHub", destination: URL(string: "https://github.com/patrickking67/tokenmeter")!)
                 Button("Show board file") { NSWorkspace.shared.activateFileViewerSelecting([UsageStore.boardURL]) }
                     .buttonStyle(.link)
             }

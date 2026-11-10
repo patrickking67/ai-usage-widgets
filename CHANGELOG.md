@@ -7,6 +7,7 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- **Signed, notarized macOS download.** `scripts/release-macos.sh` archives, signs with Developer ID, notarizes, staples and packages a DMG, a zip and `SHA256SUMS` in `dist/`. `.github/workflows/release.yml` does the same on a `v*` tag in a reviewer-gated `release` environment, attests build provenance and publishes the GitHub release. The README covers downloading and verifying it.
 - **App icon**: the two rings from the menu bar on a dark tile, with gradient arcs, drawn by `apps/macos/App/IconArt.swift` (`scripts/make-icon.sh` writes the icon set).
 - **Shortcuts, Spotlight and Siri**: Get AI Usage, Set Keep Awake and Open TokenMeter Dashboard, with suggested phrases.
 - **Dashboard analytics**: the tokens card shows the change on last week, a By tool card splits the span across Claude, Codex and Copilot, a Projects card ranks the week's repositories (worktrees count toward their repo), and a When you work heatmap shows tokens by weekday and hour with the busiest slot. The activity cache is rebuilt once to pick up each session's folder.
@@ -41,8 +42,14 @@ All notable changes to this project are documented here. The format follows
 - Claude windows come from the `limits` list the Claude app draws, with model scopes ("Weekly · Fable"), instead of internal codenames.
 - Codex's plan follows the live account, and `promax` reads "Pro Max".
 
+### Security
+- Vendor requests go through one session that refuses redirects, so a token header can never follow a 3xx to another host. It is ephemeral, keeps no cookies or cache, and requires TLS 1.2 or later.
+- Claude's live endpoint logs the status code only, not the response body. Copilot's `gh` errors keep their first line with token-shaped text masked.
+- `tokenmeter://refresh` from a link is limited to once a minute, so a web page can't drive vendor requests.
+- The Claude Code status line forces numeric fields to integers before shell arithmetic, strips control characters from board names, sanitizes the session ID used in temp file names, and runs git with the open repo's fsmonitor and hooks disabled.
+
 ### Changed
-- CI is one macOS job running `scripts/check.sh` plus a Windows job for the core tests, on `actions/checkout@v5`.
+- CI is one macOS job running `scripts/check.sh` plus a Windows job for the core tests, on `actions/checkout` pinned to a commit SHA, without persisted credentials and with job timeouts.
 - The README no longer links a GitHub Pages site; there isn't one. `docs/` is a static page to preview locally.
 - Limits refresh every 60 seconds and whenever the popover opens (at most every 20 seconds per vendor).
 - The Claude lane is named "Claude": its limits cover the whole account, not just Claude Code.
