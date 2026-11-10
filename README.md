@@ -1,6 +1,6 @@
 # TokenMeter
 
-[![CI](https://github.com/patrickking67/ai-usage-widgets/actions/workflows/ci.yml/badge.svg)](https://github.com/patrickking67/ai-usage-widgets/actions/workflows/ci.yml)
+[![CI](https://github.com/patrickking67/tokenmeter/actions/workflows/ci.yml/badge.svg)](https://github.com/patrickking67/tokenmeter/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 **Every AI coding plan limit on one meter.** TokenMeter shows how much of your Claude Code, Codex, GitHub Copilot and Cursor plans you have left, whether you're on pace to run out before the reset, and what's actually spending your tokens.
@@ -53,10 +53,22 @@ What TokenMeter writes: the board (`~/.cache/tokenmeter/board.json`, or `%LOCALA
 
 ### macOS 14+
 
+**Download (recommended).** Get `TokenMeter-<version>.dmg` from the latest [GitHub release](https://github.com/patrickking67/tokenmeter/releases/latest), open it and drag TokenMeter to Applications. Every release is signed with a Developer ID certificate, notarized by Apple and stapled, so it opens without a Gatekeeper warning. To check a download before opening it:
+
+```bash
+shasum -a 256 -c SHA256SUMS --ignore-missing          # matches the published checksums
+spctl --assess --type open --context context:primary-signature -v TokenMeter-*.dmg
+gh attestation verify TokenMeter-*.dmg --repo patrickking67/tokenmeter   # built by this repo's release workflow
+```
+
+After installing, `spctl -a -vv /Applications/TokenMeter.app` should report `source=Notarized Developer ID`.
+
+**Build from source.**
+
 ```bash
 brew install xcodegen
-git clone https://github.com/patrickking67/ai-usage-widgets
-cd ai-usage-widgets/apps/macos
+git clone https://github.com/patrickking67/tokenmeter
+cd tokenmeter/apps/macos
 echo 'DEVELOPMENT_TEAM = YOURTEAMID' > Config/Local.xcconfig   # needed for the widgets
 xcodegen generate
 xcodebuild -project TokenMeter.xcodeproj -scheme TokenMeter -configuration Release -derivedDataPath build build
@@ -73,7 +85,7 @@ See [`apps/windows/README.md`](apps/windows/README.md). It's a PowerShell and WP
 ### Claude Code plugin
 
 ```
-/plugin marketplace add patrickking67/ai-usage-widgets
+/plugin marketplace add patrickking67/tokenmeter
 /plugin install tokenmeter@tokenmeter
 ```
 
@@ -144,7 +156,7 @@ Then open <http://127.0.0.1:4116/>. The same server is configured in `.claude/la
 
 ## Deploy
 
-Nothing deploys automatically. CI builds and tests on every push and pull request. The macOS and Windows apps are built from source. Plugin users install from `main` with `/plugin marketplace add`, so a merge to `main` reaches them on their next plugin update.
+CI builds and tests on every push and pull request. Pushing a `v*` tag that matches `MARKETING_VERSION` in `apps/macos/project.yml` runs `.github/workflows/release.yml`, which builds, signs with Developer ID, notarizes, staples, attests and publishes the DMG, zip and `SHA256SUMS` as a GitHub release. It runs in the `release` environment, so a required reviewer approves each run. To cut the same release by hand on a Mac with the certificate and a notary profile, run `scripts/release-macos.sh` (see the header of that script for the one-time setup). The Windows app is installed from source. Plugin users install from `main` with `/plugin marketplace add`, so a merge to `main` reaches them on their next plugin update.
 
 ## License
 
