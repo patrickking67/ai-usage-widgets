@@ -27,7 +27,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/board.py" limits
   rate and tokens per request, the model mix (last 7 days) and tips.
 - `limits` gives current plan headroom to frame the report.
 - If the reader exits with code 2 (no board), explain that TokenMeter must be
-  installed and running (https://github.com/patrickking67/ai-usage-widgets) and stop.
+  installed and running (https://github.com/patrickking67/tokenmeter) and stop.
   If the board has no `activity` yet, say the first log scan has not happened.
 
 For exact values (e.g. to compute percentages), `board.py json` prints the raw

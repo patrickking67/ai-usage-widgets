@@ -6,8 +6,8 @@
     "name": "Patrick King",
     "url": "https://github.com/patrickking67"
   },
-  "homepage": "https://github.com/patrickking67/ai-usage-widgets",
-  "repository": "https://github.com/patrickking67/ai-usage-widgets",
+  "homepage": "https://github.com/patrickking67/tokenmeter",
+  "repository": "https://github.com/patrickking67/tokenmeter",
   "license": "MIT",
   "keywords": ["usage", "limits", "rate-limits", "tokens", "claude-code", "codex", "copilot", "budget", "statusline"]
 }

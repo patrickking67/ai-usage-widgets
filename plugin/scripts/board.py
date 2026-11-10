@@ -28,7 +28,7 @@ import os
 import sys
 import time
 
-REPO_URL = "https://github.com/patrickking67/ai-usage-widgets"
+REPO_URL = "https://github.com/patrickking67/tokenmeter"
 KNOWN_VENDORS = ("claude", "codex", "copilot", "cursor", "grok")
 VENDOR_NAMES = {"claude": "Claude", "codex": "Codex", "copilot": "GitHub Copilot",
                 "cursor": "Cursor", "grok": "Grok"}

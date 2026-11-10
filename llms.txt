@@ -1,21 +1,21 @@
 # TokenMeter
 
-> TokenMeter (repo ai-usage-widgets) shows AI coding plan limits for Claude, Codex, GitHub Copilot, Cursor and Grok in one place: a macOS menu bar app with WidgetKit widgets, a Windows tray app, and a Claude Code plugin and status line. It reads the sign-ins those tools already keep, read-only, and writes one documented board.json that every client reads.
+> TokenMeter (repo tokenmeter) shows AI coding plan limits for Claude, Codex, GitHub Copilot, Cursor and Grok in one place: a macOS menu bar app with WidgetKit widgets, a Windows tray app, and a Claude Code plugin and status line. It reads the sign-ins those tools already keep, read-only, and writes one documented board.json that every client reads.
 
 ## Docs
 
-- [README](https://github.com/patrickking67/ai-usage-widgets/blob/main/README.md): features, install, data sources and privacy, tests
-- [AGENTS.md](https://github.com/patrickking67/ai-usage-widgets/blob/main/AGENTS.md): layout, commands, conventions and safety rules for coding agents
-- [Contributing](https://github.com/patrickking67/ai-usage-widgets/blob/main/CONTRIBUTING.md): setup, branches, commits, PR checklist
-- [Security](https://github.com/patrickking67/ai-usage-widgets/blob/main/SECURITY.md): credential handling and private reporting
-- [Changelog](https://github.com/patrickking67/ai-usage-widgets/blob/main/CHANGELOG.md)
+- [README](https://github.com/patrickking67/tokenmeter/blob/main/README.md): features, install, data sources and privacy, tests
+- [AGENTS.md](https://github.com/patrickking67/tokenmeter/blob/main/AGENTS.md): layout, commands, conventions and safety rules for coding agents
+- [Contributing](https://github.com/patrickking67/tokenmeter/blob/main/CONTRIBUTING.md): setup, branches, commits, PR checklist
+- [Security](https://github.com/patrickking67/tokenmeter/blob/main/SECURITY.md): credential handling and private reporting
+- [Changelog](https://github.com/patrickking67/tokenmeter/blob/main/CHANGELOG.md)
 
 ## Spec
 
-- [Board contract](https://github.com/patrickking67/ai-usage-widgets/blob/main/spec/board.md): the board.json format all clients share
-- [Provider research](https://github.com/patrickking67/ai-usage-widgets/blob/main/spec/providers.md): where each vendor keeps its limits and sign-in
+- [Board contract](https://github.com/patrickking67/tokenmeter/blob/main/spec/board.md): the board.json format all clients share
+- [Provider research](https://github.com/patrickking67/tokenmeter/blob/main/spec/providers.md): where each vendor keeps its limits and sign-in
 
 ## Clients
 
-- [Windows client](https://github.com/patrickking67/ai-usage-widgets/blob/main/apps/windows/README.md): PowerShell and WPF tray app
-- [Claude Code plugin](https://github.com/patrickking67/ai-usage-widgets/blob/main/plugin/README.md): commands, skills and hook
+- [Windows client](https://github.com/patrickking67/tokenmeter/blob/main/apps/windows/README.md): PowerShell and WPF tray app
+- [Claude Code plugin](https://github.com/patrickking67/tokenmeter/blob/main/plugin/README.md): commands, skills and hook

@@ -21,7 +21,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/board.py" limits
 script is `../../scripts/board.py` relative to this skill's base directory.
 `board.py json` gives raw values.) If no board exists (exit code 2), explain
 that TokenMeter must be installed and running
-(https://github.com/patrickking67/ai-usage-widgets) and stop.
+(https://github.com/patrickking67/tokenmeter) and stop.
 
 ## Diagnose, in this order
 

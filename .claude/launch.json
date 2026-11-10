@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "ai-usage-widgets-site",
+      "name": "tokenmeter-site",
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "4116", "--bind", "127.0.0.1", "--directory", "docs"],
       "port": 4116

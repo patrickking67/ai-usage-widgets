@@ -4,8 +4,8 @@
 
 ```bash
 brew install xcodegen shellcheck actionlint powershell
-git clone git@github.com:patrickking67/ai-usage-widgets.git
-cd ai-usage-widgets
+git clone git@github.com:patrickking67/tokenmeter.git
+cd tokenmeter
 scripts/check.sh
 ```
 
