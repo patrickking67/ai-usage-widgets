@@ -71,6 +71,14 @@ final class CopilotSource: ProviderSource {
 
     enum FetchResult { case success([String: Any]), failure(String) }
 
+    /// First line of gh's stderr with anything token-shaped masked, so it is
+    /// safe for the log and the card.
+    nonisolated static func scrub(_ text: String) -> String {
+        let line = text.split(whereSeparator: \.isNewline).first.map(String.init) ?? ""
+        return line.replacingOccurrences(of: "(gh[opsu]_|github_pat_)[A-Za-z0-9_]+", with: "[redacted]",
+                                         options: .regularExpression)
+    }
+
     nonisolated static func fetch(gh: String) -> FetchResult {
         let proc = Process()
         proc.executableURL = URL(fileURLWithPath: gh)
@@ -85,8 +93,8 @@ final class CopilotSource: ProviderSource {
         let data = out.fileHandleForReading.readDataToEndOfFile()
         proc.waitUntilExit()
         guard proc.terminationStatus == 0 else {
-            let why = String(decoding: err.fileHandleForReading.readDataToEndOfFile().prefix(200), as: UTF8.self)
-            return .failure("gh api exited \(proc.terminationStatus): \(why)")
+            let raw = String(decoding: err.fileHandleForReading.readDataToEndOfFile().prefix(200), as: UTF8.self)
+            return .failure("gh api exited \(proc.terminationStatus): \(scrub(raw))")
         }
         guard let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
             return .failure("unreadable response")

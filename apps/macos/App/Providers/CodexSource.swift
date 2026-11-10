@@ -86,7 +86,7 @@ final class CodexSource: ProviderSource {
         Task { @MainActor in
             defer { inFlight = false }
             do {
-                let (data, resp) = try await URLSession.shared.data(for: req)
+                let (data, resp) = try await VendorSession.shared.data(for: req)
                 let status = (resp as? HTTPURLResponse)?.statusCode ?? -1
                 guard status == 200, let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
                     log.error("codex live: HTTP \(status, privacy: .public)")
@@ -100,7 +100,7 @@ final class CodexSource: ProviderSource {
                 if wantsWorkspace {
                     var w = req
                     w.url = URL(string: "https://chatgpt.com/backend-api/accounts/check/v4-2023-04-27")
-                    if let (d, r) = try? await URLSession.shared.data(for: w), (r as? HTTPURLResponse)?.statusCode == 200,
+                    if let (d, r) = try? await VendorSession.shared.data(for: w), (r as? HTTPURLResponse)?.statusCode == 200,
                        let o = try? JSONSerialization.jsonObject(with: d) as? [String: Any] {
                         workspace = Self.workspaceName(o, accountID: accountID)
                         nextWorkspace = Date().addingTimeInterval(3600)

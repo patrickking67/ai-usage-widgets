@@ -60,7 +60,7 @@ extension Local {
     }
 
     static func getJSON(_ req: URLRequest, vendor: String) async throws -> [String: Any] {
-        let (data, resp) = try await URLSession.shared.data(for: req)
+        let (data, resp) = try await VendorSession.shared.data(for: req)
         let status = (resp as? HTTPURLResponse)?.statusCode ?? -1
         guard status == 200 else { throw LaneError.http(status, vendor: vendor) }
         guard let o = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {

@@ -30,25 +30,31 @@ SEP="   "
 BOARD="$HOME/.cache/tokenmeter/board.json"
 
 # ── parse once ───────────────────────────────────────────────────────
+# Numbers are forced to integers here: bash evaluates $(( )) operands as
+# expressions, so a non-numeric value must never reach arithmetic.
 eval "$(printf '%s' "$input" | jq -r '
+  def int: (tonumber? // 0) | floor;
+  def ts: if . == null or . == "" then "" else int end;
   @sh "MODEL=\(.model.display_name // "?")",
   @sh "DIR=\(.workspace.current_dir // .cwd // "")",
-  @sh "PCT=\(.context_window.used_percentage // 0 | floor)",
+  @sh "PCT=\(.context_window.used_percentage // 0 | int)",
   @sh "COST=\(.cost.total_cost_usd // 0)",
-  @sh "DUR=\(.cost.total_duration_ms // 0)",
+  @sh "DUR=\(.cost.total_duration_ms // 0 | int)",
   @sh "SID=\(.session_id // "none")",
   @sh "EFFORT=\(.effort.level // "")",
   @sh "FAST=\(.fast_mode // false)",
   @sh "THINK=\(.thinking.enabled // false)",
-  @sh "ADDED=\(.cost.total_lines_added // 0)",
-  @sh "REMOVED=\(.cost.total_lines_removed // 0)",
+  @sh "ADDED=\(.cost.total_lines_added // 0 | int)",
+  @sh "REMOVED=\(.cost.total_lines_removed // 0 | int)",
   @sh "H5=\(.rate_limits.five_hour.used_percentage // "" )",
-  @sh "H5_AT=\(.rate_limits.five_hour.resets_at // "" )",
+  @sh "H5_AT=\(.rate_limits.five_hour.resets_at | ts)",
   @sh "D7=\(.rate_limits.seven_day.used_percentage // "" )",
-  @sh "D7_AT=\(.rate_limits.seven_day.resets_at // "" )"
+  @sh "D7_AT=\(.rate_limits.seven_day.resets_at | ts)"
 ' 2>/dev/null)"
 : "${MODEL:=?}" "${PCT:=0}" "${COST:=0}" "${DUR:=0}" "${SID:=none}" "${ADDED:=0}" "${REMOVED:=0}" "${FAST:=false}" "${THINK:=false}"
 NOW=$(date +%s)
+SID=${SID//[^A-Za-z0-9-]/}; : "${SID:=none}"   # used in temp file names
+TMP=${TMPDIR:-/tmp}
 
 # ── helpers ──────────────────────────────────────────────────────────
 link() { printf '%s]8;;%s%s%s%s]8;;%s' "$E" "$1" "$BEL" "$2" "$E" "$BEL"; }   # link <url> <text>
@@ -129,18 +135,20 @@ if [ -n "$DIR" ]; then L1+="${SEP}${BLUE}▸ $(link "file://${DIR// /%20}" "$LAB
 else                   L1+="${SEP}${BLUE}▸ ${LABEL}${R}"; fi
 
 # Git: branch, staged/modified counts and the GitHub URL, cached 5 s per session.
-CACHE="${TMPDIR:-/tmp}/ccstatus-git2-$SID"
+CACHE="$TMP/ccstatus-git2-$SID"
+# The open folder may be any repo, so its config gets no chance to run code.
+GIT=(git -c core.fsmonitor= -c core.hooksPath=/dev/null --no-optional-locks)
 stale=1
 if [ -f "$CACHE" ]; then
   mt=$(stat -f %m "$CACHE" 2>/dev/null || echo 0)
   [ $(( NOW - mt )) -le 5 ] && stale=0
 fi
 if [ "$stale" -eq 1 ]; then
-  if git -C "$DIR" rev-parse --git-dir >/dev/null 2>&1; then
-    br=$(git -C "$DIR" branch --show-current 2>/dev/null)
-    st=$(git -C "$DIR" diff --cached --numstat 2>/dev/null | wc -l | tr -d ' ')
-    md=$(git -C "$DIR" diff --numstat 2>/dev/null | wc -l | tr -d ' ')
-    url=$(git -C "$DIR" remote get-url origin 2>/dev/null \
+  if "${GIT[@]}" -C "$DIR" rev-parse --git-dir >/dev/null 2>&1; then
+    br=$("${GIT[@]}" -C "$DIR" branch --show-current 2>/dev/null)
+    st=$("${GIT[@]}" -C "$DIR" diff --cached --numstat 2>/dev/null | wc -l | tr -d ' ')
+    md=$("${GIT[@]}" -C "$DIR" diff --numstat 2>/dev/null | wc -l | tr -d ' ')
+    url=$("${GIT[@]}" -C "$DIR" remote get-url origin 2>/dev/null \
           | sed -E 's#^git@github\.com:#https://github.com/#; s#\.git$##')
     case "$url" in https://github.com/*) ;; *) url="" ;; esac
     printf '%s|%s|%s|%s' "$br" "$st" "$md" "$url" > "$CACHE"
@@ -176,10 +184,13 @@ L1+="${SEP}${DIM}\$${COST_FMT} · ${T}${R}"
 # ── row 2: TokenMeter lanes ─────────────────────────────────────────
 # Claude's windows come from this payload (freshest); the account label and
 # the other lanes come from TokenMeter's board.json.
+# Board strings come from vendor responses (org and workspace names), so
+# control characters are stripped before they reach the terminal.
 eval "$(jq -r --argjson now "$NOW" '
+  def clean: explode | map(select(. >= 32 and . != 127)) | implode;
   def p(v): .providers[]? | select(.vendor == v);
   def hot: (.meters // []) | max_by(.used) // null;
-  @sh "ACCT=\([p("claude") | [.account, .plan] | map(select(. != null and . != "")) | join(" · ")] | first // "")",
+  @sh "ACCT=\([p("claude") | [.account, .plan] | map(select(. != null and . != "")) | join(" · ") | clean] | first // "")",
   @sh "CX=\([p("codex") | hot | select(. != null) | "\(.label == "Weekly" | if . then "wk" else "5h" end) \(.used | floor)%"] | first // "")",
   @sh "CX_STALE=\([p("codex") | (($now - (.updatedAt // 0)) > 21600)] | first // false)",
   @sh "CP=\([p("copilot") | if (.meters | length) > 0 then "\(hot.used | floor)%" else (.note // "" | capture("^(?<n>[0-9,]+)") .n // "" | gsub(","; "") | tonumber? // 0 | if . >= 1000 then "\(. / 100 | floor / 10)k cr" elif . > 0 then "\(.) cr" else "" end) end] | first // "")",
@@ -237,7 +248,7 @@ if [ -n "$ITERM_SESSION_ID" ] && [ -x "$IT2" ] && [ -n "$H5$D7" ]; then
   [ -n "$D7" ] && TXT+=" · wk $(printf '%.0f' "$D7")%"
   [ -n "$H5_AT" ] && TXT+=" · $(until_str "$H5_AT")"
   [ -n "$CX" ] && TXT+="  ◎ $CX"
-  LAST="${TMPDIR:-/tmp}/ccstatus-it2-$SID"
+  LAST="$TMP/ccstatus-it2-$SID"
   if [ "$(cat "$LAST" 2>/dev/null)" != "$TXT" ]; then
     printf '%s' "$TXT" > "$LAST"
     ( perl -e 'alarm 3; exec @ARGV' "$IT2" session set-var user.claudeUsage \
